@@ -56,6 +56,38 @@ export async function POST(request: Request) {
 
       if (seriesError) throw seriesError;
 
+      // Create and link tags
+      if (seriesData.tags && seriesData.tags.length > 0) {
+        await writeToStream("progress", { step: "Đang tạo tags..." });
+
+        for (const tagName of seriesData.tags) {
+          const normalizedName = tagName.toLowerCase().trim();
+
+          // Get or create tag
+          let { data: tag } = await supabase
+            .from("tags")
+            .select()
+            .eq("name", normalizedName)
+            .single();
+
+          if (!tag) {
+            const { data: newTag } = await supabase
+              .from("tags")
+              .insert({ name: normalizedName })
+              .select()
+              .single();
+            tag = newTag;
+          }
+
+          // Link tag to series
+          if (tag) {
+            await supabase.from("series_tags").insert({
+              series_id: series.id,
+              tag_id: tag.id,
+            });
+          }
+        }
+      }
       await writeToStream("progress", { step: "Đang tạo các bài học..." });
       const episodesData = seriesData.episodes.map((episode) => ({
         series_id: series.id,

@@ -259,6 +259,57 @@ export type Database = {
           },
         ]
       }
+      series_tags: {
+        Row: {
+          created_at: string
+          series_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          series_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          series_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "series_tags_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "series_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

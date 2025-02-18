@@ -16,6 +16,7 @@ export async function generateSeries(
   {
     "title": "Tiêu đề chính của series",
     "description": "Tổng quan về series",
+    "tags": ["tag1", "tag2", "tag3"],
     "episodes": [
       {
         "title": "Tiêu đề tập",
@@ -23,7 +24,12 @@ export async function generateSeries(
         "order": 1
       }
     ]
-  }`;
+  }
+
+  Lưu ý:
+  - Tags: Tạo 3-5 tags phù hợp với nội dung và mức độ của series
+  - Tags nên bao gồm: chủ đề chính, độ khó, đối tượng học
+  - Tags phải ngắn gọn và có ý nghĩa`;
 
   const response = await client.chat.completions.create({
     model: "deepseek-chat",

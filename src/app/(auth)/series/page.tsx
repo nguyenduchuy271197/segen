@@ -3,7 +3,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { DeleteSeriesButton } from "@/components/series/DeleteSeriesButton";
-import { Series } from "@/types/database";
+import { Badge } from "@/components/ui/badge";
+import { SeriesWithTags } from "@/types/database";
 
 export default async function SeriesListingPage() {
   const supabase = await createClient();
@@ -24,10 +25,20 @@ export default async function SeriesListingPage() {
 
   const { data: series } = await supabase
     .from("series")
-    .select()
+    .select(
+      `
+      *,
+      series_tags (
+        tags (
+          id,
+          name
+        )
+      )
+    `
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
-    .returns<Series[]>();
+    .returns<SeriesWithTags[]>();
 
   return (
     <div className="max-w-6xl mx-auto p-8">
@@ -57,10 +68,19 @@ export default async function SeriesListingPage() {
                   <h2 className="text-xl font-semibold mb-2 group-hover:text-primary">
                     {item.title}
                   </h2>
-                  <p className="text-muted-foreground line-clamp-2">
+                  <p className="text-muted-foreground line-clamp-2 mb-3">
                     {item.description}
                   </p>
-                  <div className="mt-4 text-sm text-muted-foreground">
+                  {item.series_tags && item.series_tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {item.series_tags.map((st) => (
+                        <Badge key={st.tags.id} variant="secondary">
+                          {st.tags.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="text-sm text-muted-foreground">
                     Tạo ngày{" "}
                     {new Date(item.created_at).toLocaleDateString("vi-VN")}
                   </div>

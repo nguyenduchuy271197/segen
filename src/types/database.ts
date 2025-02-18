@@ -29,3 +29,18 @@ export type BookmarkWithRelations =
       series: Database["public"]["Tables"]["series"]["Row"];
     };
   };
+
+export type Tag = Database["public"]["Tables"]["tags"]["Row"];
+export type SeriesTag = Database["public"]["Tables"]["series_tags"]["Row"];
+
+export type SeriesWithTags = Series & {
+  series_tags: {
+    tags: Tag;
+  }[];
+};
+
+export type TagWithCount = Tag & {
+  _count: {
+    series_tags: number;
+  };
+};

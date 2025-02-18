@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/error";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { SeriesGenerationResponse } from "@/lib/ai/types";
+import { Label } from "@/components/ui/label";
+import { TagInput } from "./TagInput";
 
 export function SeriesForm() {
   const [topic, setTopic] = useState("");
@@ -86,6 +88,20 @@ export function SeriesForm() {
           disabled={isLoading}
         />
       </div>
+
+      {partialData?.id && (
+        <div className="space-y-2">
+          <Label>Tags</Label>
+          <TagInput
+            seriesId={partialData.id}
+            initialTags={[]}
+            disabled={isLoading}
+          />
+          <p className="text-sm text-muted-foreground">
+            Press Enter to add a tag
+          </p>
+        </div>
+      )}
 
       {isLoading && (
         <div className="space-y-4">

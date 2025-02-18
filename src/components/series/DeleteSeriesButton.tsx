@@ -31,6 +31,14 @@ export function DeleteSeriesButton({ seriesId }: DeleteSeriesButtonProps) {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
+      // Delete all related records first
+      await supabase.from("bookmarks").delete().eq("series_id", seriesId);
+      await supabase.from("series_tags").delete().eq("series_id", seriesId);
+      await supabase.from("likes").delete().eq("series_id", seriesId);
+      await supabase.from("comments").delete().eq("series_id", seriesId);
+      await supabase.from("episodes").delete().eq("series_id", seriesId);
+
+      // Finally delete the series
       const { error } = await supabase
         .from("series")
         .delete()

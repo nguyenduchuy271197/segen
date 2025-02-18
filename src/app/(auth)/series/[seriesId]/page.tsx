@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EpisodeForm } from "@/components/series/EpisodeForm";
 import { LikeButton } from "@/components/social/LikeButton";
 import { CommentSection } from "@/components/social/CommentSection";
-import type { Series, Episode, Like } from "@/types/database";
+import type { Episode, Like } from "@/types/database";
 import { VisibilityToggle } from "@/components/series/VisibilityToggle";
 import Link from "next/link";
 
@@ -13,12 +13,22 @@ export default async function SeriesDetailPage({
 }) {
   const supabase = await createClient();
 
-  // Get series data
+  // Get series data with tags
   const { data: series } = await supabase
     .from("series")
-    .select()
+    .select(
+      `
+      *,
+      series_tags (
+        tags (
+          id,
+          name
+        )
+      )
+    `
+    )
     .eq("id", params.seriesId)
-    .single<Series>();
+    .single();
 
   // Get episodes
   const { data: episodes } = await supabase
