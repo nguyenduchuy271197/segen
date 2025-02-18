@@ -19,3 +19,13 @@ export type FollowInsert = Database["public"]["Tables"]["follows"]["Insert"];
 
 export type Profile = Database["public"]["Tables"]["profiles"];
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+
+export type Bookmark = Database["public"]["Tables"]["bookmarks"];
+export type BookmarkUpdate =
+  Database["public"]["Tables"]["bookmarks"]["Update"];
+export type BookmarkWithRelations =
+  Database["public"]["Tables"]["bookmarks"]["Row"] & {
+    episodes: Database["public"]["Tables"]["episodes"]["Row"] & {
+      series: Database["public"]["Tables"]["series"]["Row"];
+    };
+  };

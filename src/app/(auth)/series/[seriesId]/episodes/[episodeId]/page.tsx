@@ -9,6 +9,7 @@ import { EpisodeContent } from "@/components/series/EpisodeContent";
 import { EpisodeView } from "@/components/series/EpisodeView";
 import { EpisodesSidebar } from "@/components/series/EpisodesSidebar";
 import { TableOfContents } from "@/components/series/TableOfContents";
+import { BookmarkButton } from "@/components/series/BookmarkButton";
 
 async function Episode({
   seriesId,
@@ -70,6 +71,11 @@ async function Episode({
         </div>
 
         <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">{episode.title}</h1>
+            <BookmarkButton episodeId={episodeId} seriesId={seriesId} />
+          </div>
+
           <div>
             <h1 className="text-3xl font-bold mb-2">{episode.title}</h1>
             <p className="text-muted-foreground mb-2">
@@ -82,6 +88,7 @@ async function Episode({
 
           {episode.content ? (
             <EpisodeView
+              seriesId={seriesId}
               content={episode.content}
               isOwner={isOwner}
               episodeId={episodeId}

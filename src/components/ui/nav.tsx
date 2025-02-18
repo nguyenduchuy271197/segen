@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/supabase/provider";
 import { Button } from "./button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Bookmark } from "lucide-react";
 
 export function Nav() {
   const router = useRouter();
@@ -30,12 +31,21 @@ export function Nav() {
             Khám phá
           </Link>
           {user && (
-            <Link
-              href="/series"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Series Của Bạn
-            </Link>
+            <>
+              <Link
+                href="/series"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Series Của Bạn
+              </Link>
+              <Link
+                href="/bookmarks"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <Bookmark className="h-4 w-4" />
+                Bookmarks
+              </Link>
+            </>
           )}
         </div>
 

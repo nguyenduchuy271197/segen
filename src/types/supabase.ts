@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bookmarks: {
+        Row: {
+          created_at: string
+          episode_id: string
+          id: string
+          series_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          episode_id: string
+          id?: string
+          series_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          episode_id?: string
+          id?: string
+          series_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
