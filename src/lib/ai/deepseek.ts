@@ -64,7 +64,7 @@ export async function generateEpisodeContent(
 ): Promise<EpisodeContentResponse> {
   const systemPrompt = `Tạo nội dung chi tiết cho một bài học. Xuất ra định dạng JSON với cấu trúc sau:
   {
-    "content": "Nội dung chính của bài học ở định dạng markdown",
+    "content": "Nội dung chính của bài học ở định dạng HTML. Sử dụng các thẻ: <h1>, <h2>, <h3> cho tiêu đề, <p> cho đoạn văn, <ul>/<li> cho danh sách không thứ tự, <ol>/<li> cho danh sách có thứ tự, <blockquote> cho trích dẫn, <code> cho code, <strong> cho in đậm, <em> cho in nghiêng",
     "summary": "Tóm tắt ngắn gọn về bài học"
   }`;
 
@@ -78,6 +78,7 @@ export async function generateEpisodeContent(
       },
     ],
     response_format: { type: "json_object" },
+    temperature: 1.5,
   });
 
   const content = response.choices[0].message.content;

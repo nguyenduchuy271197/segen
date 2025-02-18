@@ -1,14 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { LoadingPage } from "@/components/ui/loading";
 import { ErrorMessage } from "@/components/ui/error";
-import { MarkdownContent } from "@/components/ui/markdown";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { Series, Episode } from "@/types/database";
-import { EpisodeForm } from "@/components/series/EpisodeForm";
+import { EpisodeContent } from "@/components/series/EpisodeContent";
+import { EpisodeView } from "@/components/series/EpisodeView";
+import { EpisodesSidebar } from "@/components/series/EpisodesSidebar";
+import { TableOfContents } from "@/components/series/TableOfContents";
 
-async function EpisodeContent({
+async function Episode({
   seriesId,
   episodeId,
 }: {
@@ -19,9 +21,18 @@ async function EpisodeContent({
 
   const { data: series } = await supabase
     .from("series")
-    .select()
+    .select(
+      `
+      *,
+      episodes (
+        id,
+        title,
+        order_number
+      )
+    `
+    )
     .eq("id", seriesId)
-    .single<Series>();
+    .single<Series & { episodes: Episode[] }>();
 
   const { data: episode } = await supabase
     .from("episodes")
@@ -39,50 +50,65 @@ async function EpisodeContent({
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <div className="mb-8">
-        <Link
-          href={`/series/${seriesId}`}
-          className="flex items-center text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Quay Lại Series
-        </Link>
-      </div>
+    <div className="flex gap-6 px-4">
+      <EpisodesSidebar
+        seriesId={seriesId}
+        currentEpisodeId={episodeId}
+        episodes={series?.episodes || []}
+        className="w-64 shrink-0 sticky top-4 h-[calc(100vh-2rem)]"
+      />
 
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">{episode.title}</h1>
-          <p className="text-muted-foreground mb-2">
-            Bài {episode.order_number} của {series.title}
-          </p>
-          {episode.description && (
-            <p className="text-muted-foreground">{episode.description}</p>
-          )}
+      <div className="flex-1 max-w-4xl mx-auto">
+        <div className="mb-8">
+          <Link
+            href={`/series/${seriesId}`}
+            className="flex items-center text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Quay Lại Series
+          </Link>
         </div>
 
-        {episode.content ? (
-          <div className="bg-card rounded-lg p-8 shadow-sm">
-            <MarkdownContent content={episode.content} />
-            {isOwner && (
-              <div className="mt-4 border-t pt-4">
-                <EpisodeForm episode={episode} seriesId={seriesId} />
-              </div>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{episode.title}</h1>
+            <p className="text-muted-foreground mb-2">
+              Bài {episode.order_number} của {series.title}
+            </p>
+            {episode.description && (
+              <p className="text-muted-foreground">{episode.description}</p>
             )}
           </div>
-        ) : isOwner ? (
-          <div className="text-center py-12 border rounded-lg">
-            <p className="text-muted-foreground mb-4">Chưa có nội dung.</p>
-            <EpisodeForm episode={episode} seriesId={seriesId} />
-          </div>
-        ) : (
-          <div className="text-center py-12 border rounded-lg">
-            <p className="text-muted-foreground">
-              Nội dung này chưa được tạo bởi người sở hữu.
-            </p>
-          </div>
-        )}
+
+          {episode.content ? (
+            <EpisodeView
+              content={episode.content}
+              isOwner={isOwner}
+              episodeId={episodeId}
+            />
+          ) : isOwner ? (
+            <div className="text-center py-12 border rounded-lg">
+              <p className="text-muted-foreground mb-4">Chưa có nội dung.</p>
+              <EpisodeContent
+                content=""
+                isEditable={true}
+                episodeId={episodeId}
+              />
+            </div>
+          ) : (
+            <div className="text-center py-12 border rounded-lg">
+              <p className="text-muted-foreground">
+                Nội dung này chưa được tạo bởi người sở hữu.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+
+      <TableOfContents
+        content={episode.content || ""}
+        className="w-64 shrink-0 sticky top-4 h-[calc(100vh-2rem)]"
+      />
     </div>
   );
 }
@@ -94,7 +120,7 @@ export default function EpisodePage({
 }) {
   return (
     <Suspense fallback={<LoadingPage />}>
-      <EpisodeContent seriesId={params.seriesId} episodeId={params.episodeId} />
+      <Episode seriesId={params.seriesId} episodeId={params.episodeId} />
     </Suspense>
   );
 }
