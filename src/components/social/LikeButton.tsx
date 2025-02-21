@@ -1,28 +1,32 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, HeartOff } from "lucide-react";
+import { Heart } from "lucide-react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 
 interface LikeButtonProps {
   seriesId: string;
-  initialLiked?: boolean;
+  seriesOwnerId: string;
+  seriesTitle: string;
+  initialLiked: boolean;
   likeCount: number;
 }
 
 export function LikeButton({
   seriesId,
-  initialLiked = false,
+  seriesOwnerId,
+  seriesTitle,
+  initialLiked,
   likeCount,
 }: LikeButtonProps) {
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [count, setCount] = useState(likeCount);
   const { user } = useAuth();
-  const { toast } = useToast();
   const supabase = createClient();
+  const { toast } = useToast();
 
   const handleLike = async () => {
     if (!user) {
@@ -43,13 +47,38 @@ export function LikeButton({
           .eq("user_id", user.id);
         setCount((prev) => prev - 1);
       } else {
-        await supabase.from("likes").insert({
+        // Create like
+        const { error: likeError } = await supabase.from("likes").insert({
           series_id: seriesId,
           user_id: user.id,
         });
+
+        if (likeError) throw likeError;
+
+        // Create notification only if we have seriesOwnerId and it's not the same as current user
+        if (seriesOwnerId && seriesOwnerId !== user.id) {
+          const { error: notificationError } = await supabase
+            .from("notifications")
+            .insert({
+              user_id: seriesOwnerId,
+              type: "like_series",
+              data: {
+                series_id: seriesId,
+                series_title: seriesTitle,
+                actor_id: user.id,
+                actor_name: user.user_metadata?.full_name || user.email,
+              },
+              is_read: false,
+            });
+
+          if (notificationError) {
+            console.error("Failed to create notification:", notificationError);
+          }
+        }
+
         setCount((prev) => prev + 1);
+        setIsLiked(true);
       }
-      setIsLiked(!isLiked);
     } catch (error) {
       console.error("Error toggling like:", error);
       toast({
@@ -67,11 +96,9 @@ export function LikeButton({
       onClick={handleLike}
       className="flex items-center gap-2"
     >
-      {isLiked ? (
-        <Heart className="w-4 h-4 fill-current text-red-500" />
-      ) : (
-        <HeartOff className="w-4 h-4" />
-      )}
+      <Heart
+        className={`h-4 w-4 ${isLiked ? "fill-current text-red-500" : ""}`}
+      />
       <span>{count}</span>
     </Button>
   );

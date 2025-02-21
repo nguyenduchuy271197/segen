@@ -6,6 +6,7 @@ import { Button } from "./button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bookmark } from "lucide-react";
+import { NotificationDropdown } from "../notifications/NotificationDropdown";
 
 export function Nav() {
   const router = useRouter();
@@ -51,6 +52,7 @@ export function Nav() {
 
         {user && (
           <div className="flex items-center gap-4">
+            <NotificationDropdown />
             <Link href="/profile" className="hover:text-primary">
               Trang cá nhân
             </Link>

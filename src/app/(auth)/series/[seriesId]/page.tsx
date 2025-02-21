@@ -4,6 +4,7 @@ import { LikeButton } from "@/components/social/LikeButton";
 import { CommentSection } from "@/components/social/CommentSection";
 import type { Episode, Like } from "@/types/database";
 import { VisibilityToggle } from "@/components/series/VisibilityToggle";
+import { ReportButton } from "@/components/series/ReportButton";
 import Link from "next/link";
 
 export default async function SeriesDetailPage({
@@ -78,14 +79,18 @@ export default async function SeriesDetailPage({
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">{series.title}</h1>
           <div className="flex items-center gap-4">
-            {isOwner && (
+            {isOwner ? (
               <VisibilityToggle
                 seriesId={series.id}
                 initialIsPublic={series.is_public ?? false}
               />
+            ) : (
+              <ReportButton seriesId={series.id} />
             )}
             <LikeButton
               seriesId={series.id}
+              seriesOwnerId={series.user_id}
+              seriesTitle={series.title}
               initialLiked={!!userLike}
               likeCount={likes?.length ?? 0}
             />
