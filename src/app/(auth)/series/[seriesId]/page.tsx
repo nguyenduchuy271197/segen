@@ -15,11 +15,16 @@ export default async function SeriesDetailPage({
   const supabase = await createClient();
 
   // Get series data with tags
+  // Update the series query to include profile information
   const { data: series } = await supabase
     .from("series")
     .select(
       `
       *,
+      profiles (
+        full_name,
+        avatar_url
+      ),
       series_tags (
         tags (
           id,
@@ -77,7 +82,17 @@ export default async function SeriesDetailPage({
     <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold">{series.title}</h1>
+          <div>
+            <h1 className="text-3xl font-bold">{series.title}</h1>
+            <div className="mt-2">
+              <Link
+                href={`/profile/${series.user_id}`}
+                className="text-sm text-muted-foreground hover:text-primary hover:underline"
+              >
+                Tạo bởi {series.profiles?.full_name || "Unnamed User"}
+              </Link>
+            </div>
+          </div>
           <div className="flex items-center gap-4">
             {isOwner ? (
               <VisibilityToggle
