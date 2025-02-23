@@ -17,11 +17,15 @@ interface CommentWithProfile extends Comment {
 
 interface CommentSectionProps {
   seriesId: string;
+  seriesTitle: string;
+  seriesOwnerId: string;
   initialComments: CommentWithProfile[];
 }
 
 export function CommentSection({
   seriesId,
+  seriesTitle,
+  seriesOwnerId,
   initialComments,
 }: CommentSectionProps) {
   const [comments, setComments] =
@@ -55,6 +59,23 @@ export function CommentSection({
         .single();
 
       if (error) throw error;
+
+      // Create notification for series owner
+      if (seriesOwnerId !== user.id) {
+        await supabase.from("notifications").insert({
+          user_id: seriesOwnerId,
+          type: "comment",
+          data: {
+            series_id: seriesId,
+            series_title: seriesTitle,
+            comment_id: newComment.id,
+            comment_content: content,
+            actor_id: user.id,
+            actor_name: user.user_metadata?.full_name || user.email,
+          },
+          is_read: false,
+        });
+      }
 
       setComments([...comments, newComment]);
       setContent("");

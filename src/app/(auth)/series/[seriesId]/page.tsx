@@ -130,7 +130,12 @@ export default async function SeriesDetailPage({
       </div>
 
       <div className="border-t pt-8">
-        <CommentSection seriesId={series.id} initialComments={comments ?? []} />
+        <CommentSection
+          seriesId={series.id}
+          seriesTitle={series.title}
+          seriesOwnerId={series.user_id}
+          initialComments={comments ?? []}
+        />
       </div>
     </div>
   );
