@@ -6,6 +6,7 @@ import type { Episode, Like } from "@/types/database";
 import { VisibilityToggle } from "@/components/series/VisibilityToggle";
 import { ReportButton } from "@/components/series/ReportButton";
 import Link from "next/link";
+import { incrementSeriesView } from "@/lib/views";
 
 export default async function SeriesDetailPage({
   params,
@@ -13,6 +14,14 @@ export default async function SeriesDetailPage({
   params: { seriesId: string };
 }) {
   const supabase = await createClient();
+
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Increment view count
+  await incrementSeriesView(params.seriesId, user?.id);
 
   // Get series data with tags
   // Update the series query to include profile information
@@ -51,10 +60,6 @@ export default async function SeriesDetailPage({
     .eq("series_id", params.seriesId)
     .returns<Like[]>();
 
-  // Get current user and check ownership
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   const isOwner = user?.id === series?.user_id;
 
   const userLike = likes?.find((like) => like.user_id === user?.id);
@@ -84,13 +89,16 @@ export default async function SeriesDetailPage({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold">{series.title}</h1>
-            <div className="mt-2">
-              <Link
-                href={`/profile/${series.user_id}`}
-                className="text-sm text-muted-foreground hover:text-primary hover:underline"
-              >
-                Tạo bởi {series.profiles?.full_name || "Unnamed User"}
-              </Link>
+            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+              <span>{series.view_count || 0} lượt xem</span>
+              <div className="mt-2">
+                <Link
+                  href={`/profile/${series.user_id}`}
+                  className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                >
+                  Tạo bởi {series.profiles?.full_name || "Unnamed User"}
+                </Link>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-4">

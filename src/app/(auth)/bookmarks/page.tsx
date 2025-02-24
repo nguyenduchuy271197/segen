@@ -27,7 +27,8 @@ export default async function BookmarksPage() {
           created_at,
           description,
           is_public,
-          user_id
+          user_id,
+          view_count
         )
       )
     `

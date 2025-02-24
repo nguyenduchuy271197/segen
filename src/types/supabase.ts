@@ -347,6 +347,7 @@ export type Database = {
           is_public: boolean | null
           title: string
           user_id: string
+          view_count: number | null
         }
         Insert: {
           created_at?: string
@@ -355,6 +356,7 @@ export type Database = {
           is_public?: boolean | null
           title: string
           user_id: string
+          view_count?: number | null
         }
         Update: {
           created_at?: string
@@ -363,6 +365,7 @@ export type Database = {
           is_public?: boolean | null
           title?: string
           user_id?: string
+          view_count?: number | null
         }
         Relationships: [
           {
@@ -407,6 +410,42 @@ export type Database = {
           },
         ]
       }
+      series_views: {
+        Row: {
+          created_at: string | null
+          id: string
+          series_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          series_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          series_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "series_views_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "series_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tags: {
         Row: {
           created_at: string
@@ -430,7 +469,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_view_count: {
+        Args: {
+          series_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       admin_role: "super_admin" | "admin"
