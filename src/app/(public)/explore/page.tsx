@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { formatPrice } from "@/lib/format";
 
 export default async function ExplorePage() {
   const supabase = await createClient();
@@ -29,10 +30,13 @@ export default async function ExplorePage() {
               <h2 className="text-xl font-semibold mb-2 group-hover:text-primary">
                 {item.title}
               </h2>
-              <p className="text-muted-foreground line-clamp-2">
+              <p className="text-muted-foreground line-clamp-2 mb-4">
                 {item.description}
               </p>
-              <div className="mt-4 flex items-center gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-primary">
+                  {formatPrice(item.price)}
+                </span>
                 <span className="text-sm text-muted-foreground">
                   Tạo bởi {item.profiles?.full_name}
                 </span>

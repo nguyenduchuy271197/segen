@@ -345,6 +345,7 @@ export type Database = {
           description: string | null
           id: string
           is_public: boolean | null
+          price: number | null
           title: string
           user_id: string
           view_count: number | null
@@ -354,6 +355,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_public?: boolean | null
+          price?: number | null
           title: string
           user_id: string
           view_count?: number | null
@@ -363,6 +365,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_public?: boolean | null
+          price?: number | null
           title?: string
           user_id?: string
           view_count?: number | null

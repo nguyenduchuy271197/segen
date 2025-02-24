@@ -1,6 +1,7 @@
 import { SeriesWithTags } from "@/types/database";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { formatPrice } from "@/lib/format";
 
 interface SeriesListProps {
   series: SeriesWithTags[];
@@ -21,12 +22,17 @@ export function SeriesList({ series }: SeriesListProps) {
               {item.description}
             </p>
           )}
-          <div className="flex flex-wrap gap-2 mt-3">
-            {item.series_tags?.map((st) => (
-              <Badge key={st.tags.id} variant="secondary">
-                {st.tags.name}
-              </Badge>
-            ))}
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {formatPrice(item.price)}
+            </span>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {item.series_tags?.map((st) => (
+                <Badge key={st.tags.id} variant="secondary">
+                  {st.tags.name}
+                </Badge>
+              ))}
+            </div>
           </div>
         </Link>
       ))}
