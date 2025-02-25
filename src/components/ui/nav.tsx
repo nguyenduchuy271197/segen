@@ -40,6 +40,12 @@ export function Nav() {
                 Series Của Bạn
               </Link>
               <Link
+                href="/purchases"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Series Đã Mua
+              </Link>
+              <Link
                 href="/bookmarks"
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
               >

@@ -5,3 +5,19 @@ export function formatPrice(price: number | null) {
     currency: "VND",
   }).format(price);
 }
+
+export function formatDate(
+  date: string | Date,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const defaultOptions: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  };
+
+  return new Intl.DateTimeFormat("vi-VN", options || defaultOptions).format(
+    dateObj
+  );
+}
