@@ -47,12 +47,21 @@ async function Episode({
   } = await supabase.auth.getUser();
   const isOwner = user?.id === series?.user_id;
 
+  const { data: purchase } = user?.id
+    ? await supabase
+        .from("purchases")
+        .select()
+        .eq("series_id", seriesId)
+        .eq("user_id", user.id)
+        .single()
+    : { data: null };
+
   if (!series || !episode) {
     return <ErrorMessage message="Không tìm thấy bài học" />;
   }
 
   // Check if user has access to this episode
-  const hasAccess = isOwner || episode.is_preview;
+  const hasAccess = isOwner || episode.is_preview || !!purchase;
 
   return (
     <div className="flex gap-6 px-4">

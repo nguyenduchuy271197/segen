@@ -8,6 +8,7 @@ import { ReportButton } from "@/components/series/ReportButton";
 import Link from "next/link";
 import { incrementSeriesView } from "@/lib/views";
 import { PriceEditForm } from "@/components/series/PriceEditForm";
+import { PurchaseButton } from "@/components/series/PurchaseButton";
 
 export default async function SeriesDetailPage({
   params,
@@ -65,6 +66,16 @@ export default async function SeriesDetailPage({
 
   const userLike = likes?.find((like) => like.user_id === user?.id);
 
+  // Check if user has purchased the series
+  const { data: purchase } = user?.id
+    ? await supabase
+        .from("purchases")
+        .select()
+        .eq("series_id", params.seriesId)
+        .eq("user_id", user.id)
+        .single()
+    : { data: null };
+
   // Get comments with profiles
   const { data: comments } = await supabase
     .from("comments")
@@ -111,7 +122,16 @@ export default async function SeriesDetailPage({
                     initialIsPublic={series.is_public ?? false}
                   />
                 ) : (
-                  <ReportButton seriesId={series.id} />
+                  <div className="flex items-center gap-4">
+                    <ReportButton seriesId={series.id} />
+                    {(series.price ?? 0) > 0 && (
+                      <PurchaseButton
+                        seriesId={series.id}
+                        price={series.price || 0}
+                        isPurchased={!!purchase}
+                      />
+                    )}
+                  </div>
                 )}
                 <LikeButton
                   seriesId={series.id}

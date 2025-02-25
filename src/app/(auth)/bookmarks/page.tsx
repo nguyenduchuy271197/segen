@@ -21,6 +21,7 @@ export default async function BookmarksPage() {
         created_at,
         order_number,
         series_id,
+        is_preview,
         series (
           id,
           title,
