@@ -3,7 +3,7 @@ import { LoadingPage } from "@/components/ui/loading";
 import { ErrorMessage } from "@/components/ui/error";
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 import type { Series, Episode } from "@/types/database";
 import { EpisodeContent } from "@/components/series/EpisodeContent";
 import { EpisodeView } from "@/components/series/EpisodeView";
@@ -28,7 +28,8 @@ async function Episode({
       episodes (
         id,
         title,
-        order_number
+        order_number,
+        is_preview
       )
     `
     )
@@ -49,6 +50,9 @@ async function Episode({
   if (!series || !episode) {
     return <ErrorMessage message="Không tìm thấy bài học" />;
   }
+
+  // Check if user has access to this episode
+  const hasAccess = isOwner || episode.is_preview;
 
   return (
     <div className="flex gap-6 px-4">
@@ -86,7 +90,17 @@ async function Episode({
             )}
           </div>
 
-          {episode.content ? (
+          {!hasAccess ? (
+            <div className="text-center py-12 border rounded-lg">
+              <Lock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground mb-4">
+                Nội dung này đã bị khoá.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Bạn cần mua series này để xem nội dung.
+              </p>
+            </div>
+          ) : episode.content ? (
             <EpisodeView
               seriesId={seriesId}
               content={episode.content}
@@ -104,9 +118,7 @@ async function Episode({
             </div>
           ) : (
             <div className="text-center py-12 border rounded-lg">
-              <p className="text-muted-foreground">
-                Nội dung này chưa được tạo bởi người sở hữu.
-              </p>
+              <p className="text-muted-foreground">Chưa có nội dung.</p>
             </div>
           )}
         </div>

@@ -71,5 +71,3 @@
 - Xây dựng danh sách chờ người dùng
 - Chuẩn bị tài liệu hướng dẫn và FAQs
 - Lên kế hoạch truyền thông cho soft launch
-
-x

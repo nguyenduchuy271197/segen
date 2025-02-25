@@ -111,6 +111,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_preview: boolean | null
           order_number: number
           series_id: string
           title: string
@@ -120,6 +121,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_preview?: boolean | null
           order_number: number
           series_id: string
           title: string
@@ -129,6 +131,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_preview?: boolean | null
           order_number?: number
           series_id?: string
           title?: string
@@ -276,6 +279,61 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      purchases: {
+        Row: {
+          amount: number
+          created_at: string
+          episode_id: string | null
+          id: string
+          series_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          episode_id?: string | null
+          id?: string
+          series_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          episode_id?: string | null
+          id?: string
+          series_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reports: {
         Row: {
