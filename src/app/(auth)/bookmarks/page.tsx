@@ -7,7 +7,8 @@ export default async function BookmarksPage() {
 
   const { data: initialBookmarks } = await supabase
     .from("bookmarks")
-    .select(`
+    .select(
+      `
       *,
       series (
         id,
@@ -18,18 +19,35 @@ export default async function BookmarksPage() {
           full_name,
           avatar_url
         )
+      ),
+      episodes (
+        id,
+        title,
+        description,
+        content,
+        created_at,
+        is_preview,
+        order_number,
+        series_id,
+        series (
+          id,
+          title,
+          description,
+          is_public,
+          price,
+          user_id,
+          created_at,
+          view_count
+        )
       )
-    `)
+    `
+    )
     .order("created_at", { ascending: false })
     .limit(10);
 
   return (
-    <Section 
-      title="Bookmarks" 
-      description="Các series bạn đã lưu để xem sau"
-    >
+    <Section title="Bookmarks" description="Các series bạn đã lưu để xem sau">
       <BookmarksList initialBookmarks={initialBookmarks} />
     </Section>
   );
 }
-

@@ -7,12 +7,16 @@ export default async function PurchasesPage() {
   const supabase = await createClient();
 
   // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Get user's purchases with series details
-  const { data: purchases } = await supabase
-    .from("purchases")
-    .select(`
+  // Add a check to ensure user exists before querying
+  const { data: purchases } = user
+    ? await supabase
+        .from("purchases")
+        .select(
+          `
       *,
       series (
         id,
@@ -23,15 +27,14 @@ export default async function PurchasesPage() {
           full_name
         )
       )
-    `)
-    .eq("user_id", user?.id)
-    .order("created_at", { ascending: false });
+    `
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+    : { data: [] };
 
   return (
-    <Section 
-      title="Đã Mua" 
-      description="Các series bạn đã mua"
-    >
+    <Section title="Đã Mua" description="Các series bạn đã mua">
       <div className="space-y-6">
         {purchases && purchases.length > 0 ? (
           purchases.map((purchase) => (

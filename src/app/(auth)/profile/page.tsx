@@ -15,7 +15,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const supabase = createClient();
-  
+
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
   const [website, setWebsite] = useState("");
@@ -40,7 +40,6 @@ export default function ProfilePage() {
         if (data) {
           setFullName(data.full_name || "");
           setBio(data.bio || "");
-          setWebsite(data.website || "");
           setAvatarUrl(data.avatar_url || "");
         }
       } catch (error) {
@@ -53,22 +52,20 @@ export default function ProfilePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     if (!user) return;
-    
+
     setLoading(true);
-    
+
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .upsert({
-          id: user.id,
-          full_name: fullName,
-          bio,
-          website,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
-        });
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        full_name: fullName,
+        bio,
+        website,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      });
 
       if (error) {
         throw error;

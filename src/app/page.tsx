@@ -4,9 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { Section } from "@/components/ui/section";
-import {Nunito_Sans} from "next/font/google"
-
-const nunitoSans = Nunito_Sans({})
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -28,8 +25,8 @@ export default async function HomePage() {
     .limit(9);
 
   return (
-    <Section 
-      title="Series Nổi Bật" 
+    <Section
+      title="Series Nổi Bật"
       description="Khám phá các series kiến thức được xem nhiều nhất"
     >
       {featuredSeries && featuredSeries.length > 0 ? (

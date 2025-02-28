@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { Navbar } from "@/components/ui/navbar";
 import { MobileNav } from "@/components/ui/mobile-nav";
@@ -32,4 +32,4 @@ export function AppLayout({ children }: AppLayoutProps) {
       </div>
     </div>
   );
-} 
+}
