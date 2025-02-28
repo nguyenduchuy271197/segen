@@ -5,28 +5,16 @@ import { PlusIcon } from "lucide-react";
 import { DeleteSeriesButton } from "@/components/series/DeleteSeriesButton";
 import { Badge } from "@/components/ui/badge";
 import { SeriesWithTags } from "@/types/database";
+import { Section } from "@/components/ui/section";
 
-export default async function SeriesListingPage() {
+export default async function SeriesPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user?.id) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">
-          Please log in to view your series.
-        </p>
-      </div>
-    );
-  }
-
-  const { data: series } = await supabase
+  const { data: userSeries } = await supabase
     .from("series")
-    .select(
-      `
+    .select(`
       *,
       series_tags (
         tags (
@@ -34,65 +22,67 @@ export default async function SeriesListingPage() {
           name
         )
       )
-    `
-    )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .returns<SeriesWithTags[]>();
+    `)
+    .eq("user_id", user?.id)
+    .order("created_at", { ascending: false });
+
+  const createSeriesButton = (
+    <Link href="/series/new">
+      <Button className="gap-2">
+        <PlusIcon className="h-4 w-4" />
+        Tạo Series Mới
+      </Button>
+    </Link>
+  );
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Series Của Bạn</h1>
-        <Link href="/series/new">
-          <Button>
-            <PlusIcon className="w-4 h-4 mr-2" />
-            Tạo Series Mới
-          </Button>
-        </Link>
-      </div>
-
-      {series?.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">Bạn chưa tạo series nào.</p>
-          <Link href="/series/new">
-            <Button>Tạo Series Đầu Tiên</Button>
-          </Link>
-        </div>
-      ) : (
+    <Section 
+      title="Series Của Tôi" 
+      description="Quản lý các series kiến thức của bạn"
+      action={createSeriesButton}
+    >
+      {userSeries && userSeries.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {series?.map((item) => (
-            <div key={item.id} className="relative group">
-              <Link href={`/series/${item.id}`} className="block">
-                <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-                  <h2 className="text-xl font-semibold mb-2 group-hover:text-primary">
-                    {item.title}
-                  </h2>
-                  <p className="text-muted-foreground line-clamp-2 mb-3">
-                    {item.description}
-                  </p>
-                  {item.series_tags && item.series_tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {item.series_tags.map((st) => (
-                        <Badge key={st.tags.id} variant="secondary">
-                          {st.tags.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                  <div className="text-sm text-muted-foreground">
-                    Tạo ngày{" "}
-                    {new Date(item.created_at).toLocaleDateString("vi-VN")}
-                  </div>
-                </div>
-              </Link>
-              <div className="absolute top-4 right-4">
-                <DeleteSeriesButton seriesId={item.id} />
+          {userSeries.map((series: SeriesWithTags) => (
+            <div key={series.id} className="border rounded-lg p-6 flex flex-col">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold text-xl line-clamp-1">{series.title}</h3>
+                <DeleteSeriesButton seriesId={series.id} />
+              </div>
+              <p className="text-muted-foreground line-clamp-2 mb-4">{series.description}</p>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                {series.series_tags?.map(
+                  (tag) =>
+                    tag.tags && (
+                      <Badge key={tag.tags.id} variant="outline">
+                        {tag.tags.name}
+                      </Badge>
+                    )
+                )}
+              </div>
+              
+              <div className="flex justify-between items-center mt-auto pt-4 border-t">
+                <Badge variant={series.is_public ? "default" : "secondary"}>
+                  {series.is_public ? "Public" : "Private"}
+                </Badge>
+                <Link href={`/series/${series.id}`}>
+                  <Button variant="outline" size="sm">
+                    Xem chi tiết
+                  </Button>
+                </Link>
               </div>
             </div>
           ))}
         </div>
+      ) : (
+        <div className="text-center py-12 border rounded-lg">
+          <p className="text-muted-foreground mb-4">
+            Bạn chưa có series nào. Hãy tạo series đầu tiên!
+          </p>
+          {createSeriesButton}
+        </div>
       )}
-    </div>
+    </Section>
   );
 }

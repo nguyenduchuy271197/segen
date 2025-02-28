@@ -1,74 +1,77 @@
 import { createClient } from "@/lib/supabase/server";
-import { TagCloud } from "@/components/series/TagCloud";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Star } from "lucide-react";
+import { formatDate } from "@/lib/format";
+import { Section } from "@/components/ui/section";
+import {Nunito_Sans} from "next/font/google"
+
+const nunitoSans = Nunito_Sans({})
 
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const { data: popularTags } = await supabase
-    .from("tags")
+  // Fetch popular series with their authors
+  const { data: featuredSeries } = await supabase
+    .from("series")
     .select(
       `
-      id,
-      name,
-      created_at,
-      series_tags(count)
+      *,
+      profiles (
+        full_name,
+        avatar_url
+      )
     `
     )
-    .order("series_tags(count)", { ascending: false })
-    .limit(20);
-
-  // Transform the data to match the expected type
-  const formattedTags =
-    popularTags?.map((tag) => ({
-      ...tag,
-      _count: {
-        series_tags: tag.series_tags[0]?.count ?? 0,
-      },
-    })) || [];
+    .eq("is_public", true)
+    .order("view_count", { ascending: false })
+    .limit(9);
 
   return (
-    <div className="container py-8">
-      <main className="min-h-screen flex flex-col items-center justify-center p-8">
-        <div className="max-w-2xl w-full space-y-8 text-center">
-          <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight">
-              Tạo Series Kiến Thức với AI
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Tạo ra các chuỗi bài học toàn diện về bất kỳ chủ đề nào với sự hỗ
-              trợ của AI. Chỉ cần nhập chủ đề, chúng tôi sẽ tạo ra một series
-              bài học có cấu trúc cho bạn.
-            </p>
-          </div>
+    <Section 
+      title="Series Nổi Bật" 
+      description="Khám phá các series kiến thức được xem nhiều nhất"
+    >
+      {featuredSeries && featuredSeries.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {featuredSeries.map((series) => (
+            <Link key={series.id} href={`/series/${series.id}`}>
+              <div className="border rounded-lg p-6 h-full hover:shadow-lg transition-shadow flex flex-col">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-xl font-semibold line-clamp-2">
+                    {series.title}
+                  </h3>
+                  {series.view_count && series.view_count > 100 && (
+                    <div className="flex items-center text-amber-500">
+                      <Star className="h-4 w-4 fill-current" />
+                    </div>
+                  )}
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Tạo Series Nhanh Chóng</h3>
-              <p className="text-muted-foreground">
-                Tạo series học tập hoàn chỉnh với các tập có cấu trúc trong vài
-                giây
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Nội Dung từ AI</h3>
-              <p className="text-muted-foreground">
-                Mỗi tập được tạo với nội dung chi tiết và phù hợp
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Tùy Chỉnh Linh Hoạt</h3>
-              <p className="text-muted-foreground">
-                Chỉnh sửa và tinh chỉnh nội dung theo nhu cầu của bạn
-              </p>
-            </div>
-          </div>
+                <p className="text-muted-foreground line-clamp-2 mb-4 flex-grow">
+                  {series.description}
+                </p>
 
-          <section className="py-8">
-            <h2 className="text-xl font-semibold mb-4">Popular Tags</h2>
-            <TagCloud tags={formattedTags} />
-          </section>
+                <div className="flex items-center justify-between mt-auto pt-4 border-t text-sm text-muted-foreground">
+                  <span>
+                    Tác giả: {series.profiles?.full_name || "Unnamed User"}
+                  </span>
+                  <span>{formatDate(series.created_at)}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
-      </main>
-    </div>
+      ) : (
+        <div className="text-center py-12 border rounded-lg">
+          <p className="text-muted-foreground mb-4">
+            Chưa có series nổi bật. Hãy tạo series đầu tiên!
+          </p>
+          <Link href="/series/new">
+            <Button>Tạo Series Mới</Button>
+          </Link>
+        </div>
+      )}
+    </Section>
   );
 }
