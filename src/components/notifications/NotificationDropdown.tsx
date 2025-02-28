@@ -5,9 +5,15 @@ import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../ui/sheet";
 import { useEffect, useState } from "react";
 import {
   NotificationWithProfile,
@@ -21,14 +27,17 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/provider";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 export function NotificationDropdown() {
   const [notifications, setNotifications] = useState<NotificationWithProfile[]>(
     []
   );
   const [unreadCount, setUnreadCount] = useState(0);
+  const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const supabase = createClient();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     if (!user) return;
@@ -83,6 +92,7 @@ export function NotificationDropdown() {
         )
       );
     }
+    setOpen(false);
   };
 
   // Type guard functions to ensure type safety
@@ -233,30 +243,56 @@ export function NotificationDropdown() {
     }
   };
 
+  const NotificationBellButton = (
+    <Button variant="ghost" size="icon" className="relative">
+      <Bell className="h-5 w-5" />
+      {unreadCount > 0 && (
+        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+          {unreadCount}
+        </span>
+      )}
+    </Button>
+  );
+
+  const NotificationList = () => (
+    <>
+      {notifications.length === 0 ? (
+        <div className="p-4 text-center text-sm text-muted-foreground">
+          Không có thông báo
+        </div>
+      ) : (
+        notifications.map((notification) => (
+          <div key={notification.id} className="border-b last:border-b-0">
+            {renderNotification(notification)}
+          </div>
+        ))
+      )}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>{NotificationBellButton}</SheetTrigger>
+        <SheetContent side="bottom" className="h-[80vh] rounded-t-xl">
+          <SheetHeader className="text-left mb-4">
+            <SheetTitle>Thông báo</SheetTitle>
+          </SheetHeader>
+          <div className="overflow-y-auto max-h-[calc(80vh-80px)]">
+            <NotificationList />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {unreadCount}
-            </span>
-          )}
-        </Button>
+        {NotificationBellButton}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
-        {notifications.length === 0 ? (
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            Không có thông báo
-          </div>
-        ) : (
-          notifications.map((notification) => (
-            <DropdownMenuItem key={notification.id} className="p-0">
-              {renderNotification(notification)}
-            </DropdownMenuItem>
-          ))
-        )}
+        <NotificationList />
       </DropdownMenuContent>
     </DropdownMenu>
   );

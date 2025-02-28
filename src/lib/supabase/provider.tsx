@@ -1,66 +1,64 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { createClient } from "./client";
-import type { User } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 
-const AuthContext = createContext<{
+type AuthContextType = {
   user: User | null;
-  loading: boolean;
-}>({
+  isLoading: boolean;
+};
+
+const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: true,
+  isLoading: true,
 });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-
-      // Handle first login
-      if (event === "SIGNED_IN" && session?.user) {
-        setTimeout(async () => {
-          try {
-            // Check if profile exists
-            const { data: existingProfile } = await supabase
-              .from("profiles")
-              .select()
-              .eq("id", session.user.id)
-              .single();
-
-            if (!existingProfile) {
-              // Create new profile with Google data
-              await supabase.from("profiles").insert({
-                id: session.user.id,
-                full_name: session.user.user_metadata?.name,
-                avatar_url: session.user.user_metadata?.picture,
-                updated_at: new Date().toISOString(),
-              });
-            }
-          } catch (error) {
-            console.error("Error handling first login:", error);
-          }
-        }, 0);
+    const getUser = async () => {
+      setIsLoading(true);
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUser(user);
+      } catch (error) {
+        console.error("Error getting user:", error);
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
+
+    getUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      }
+    );
 
     return () => {
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, [supabase]);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};

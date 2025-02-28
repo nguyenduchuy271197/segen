@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { BookmarksList } from "@/components/series/BookmarksList";
+import { Section } from "@/components/ui/section";
 
 export default async function BookmarksPage() {
   const supabase = await createClient();
@@ -8,40 +9,45 @@ export default async function BookmarksPage() {
     .from("bookmarks")
     .select(
       `
-      id,
-      created_at,
-      episode_id,
-      series_id,
-      user_id,
+      *,
+      series (
+        id,
+        title,
+        description,
+        created_at,
+        profiles (
+          full_name,
+          avatar_url
+        )
+      ),
       episodes (
         id,
         title,
         description,
         content,
         created_at,
+        is_preview,
         order_number,
         series_id,
-        is_preview,
         series (
           id,
           title,
-          created_at,
           description,
           is_public,
+          price,
           user_id,
-          view_count,
-          price
+          created_at,
+          view_count
         )
       )
     `
     )
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(10);
 
   return (
-    <div className="container py-8">
-      <h1 className="text-2xl font-bold mb-6">Your Bookmarks</h1>
+    <Section title="Bookmarks" description="Các series bạn đã lưu để xem sau">
       <BookmarksList initialBookmarks={initialBookmarks} />
-    </div>
+    </Section>
   );
 }
