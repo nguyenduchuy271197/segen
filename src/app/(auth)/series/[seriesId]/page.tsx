@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { EpisodeForm } from "@/components/series/EpisodeForm";
 import { LikeButton } from "@/components/social/LikeButton";
 import { CommentSection } from "@/components/social/CommentSection";
 import type { Episode, Like } from "@/types/database";
@@ -10,6 +9,11 @@ import { incrementSeriesView } from "@/lib/views";
 import { PriceEditForm } from "@/components/series/PriceEditForm";
 import { PurchaseButton } from "@/components/series/PurchaseButton";
 import { MainWithSidebar } from "@/components/layout/MainWithSidebar";
+import { EpisodesList } from "@/components/series/EpisodesList";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BookOpen, Calendar, Eye } from "lucide-react";
+import { formatDate } from "@/lib/format";
 
 export default async function SeriesDetailPage({
   params,
@@ -27,7 +31,6 @@ export default async function SeriesDetailPage({
   await incrementSeriesView(params.seriesId, user?.id);
 
   // Get series data with tags
-  // Update the series query to include profile information
   const { data: series } = await supabase
     .from("series")
     .select(
@@ -82,8 +85,13 @@ export default async function SeriesDetailPage({
     .from("comments")
     .select(
       `
-      *,
-      profiles:user_id (
+      id,
+      content,
+      created_at,
+      series_id,
+      user_id,
+      profiles (
+        id,
         full_name,
         avatar_url
       )
@@ -99,80 +107,112 @@ export default async function SeriesDetailPage({
   // Main content
   const mainContent = (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-6 md:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">{series.title}</h1>
-            <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
-              <span>{series.view_count || 0} lượt xem</span>
+      <div className="bg-gradient-to-b from-primary/5 to-transparent rounded-xl p-6 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-6">
+          <div className="flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold mb-3">
+              {series.title}
+            </h1>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {series.series_tags?.map(
+                (tag: { tags: { id: string; name: string } }) => (
+                  <Badge
+                    key={tag.tags.id}
+                    variant="outline"
+                    className="bg-background/80"
+                  >
+                    {tag.tags.name}
+                  </Badge>
+                )
+              )}
+            </div>
+            <p className="text-muted-foreground">{series.description}</p>
+          </div>
+
+          <div className="flex flex-col gap-4 sm:min-w-[200px]">
+            <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={series.profiles?.avatar_url || undefined} />
+                <AvatarFallback>
+                  {series.profiles?.full_name?.[0] || "U"}
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <Link
                   href={`/profile/${series.user_id}`}
-                  className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                  className="text-sm font-medium hover:text-primary hover:underline"
                 >
-                  Tạo bởi {series.profiles?.full_name || "Unnamed User"}
+                  {series.profiles?.full_name || "Unnamed User"}
                 </Link>
+                <p className="text-xs text-muted-foreground">Tác giả</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex items-center gap-2 p-3 bg-card rounded-lg border">
+                <Eye className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">{series.view_count || 0}</p>
+                  <p className="text-xs text-muted-foreground">Lượt xem</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-card rounded-lg border">
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">{episodes.length}</p>
+                  <p className="text-xs text-muted-foreground">Bài học</p>
+                </div>
+              </div>
+              <div className="col-span-2 flex items-center gap-2 p-3 bg-card rounded-lg border">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">{formatDate(series.created_at)}</p>
+                  <p className="text-xs text-muted-foreground">Ngày tạo</p>
+                </div>
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 md:gap-4">
-            {isOwner ? (
-              <VisibilityToggle
-                seriesId={series.id}
-                initialIsPublic={series.is_public ?? false}
-              />
-            ) : (
-              <div className="flex flex-wrap items-center gap-3 md:gap-4">
-                <ReportButton seriesId={series.id} />
-                {(series.price ?? 0) > 0 && (
-                  <PurchaseButton
-                    seriesId={series.id}
-                    price={series.price || 0}
-                    isPurchased={!!purchase}
-                  />
-                )}
-              </div>
-            )}
-            <LikeButton
-              seriesId={series.id}
-              seriesOwnerId={series.user_id}
-              seriesTitle={series.title}
-              initialLiked={!!userLike}
-              likeCount={likes?.length ?? 0}
-            />
-          </div>
         </div>
-        <p className="text-gray-600">{series.description}</p>
-      </div>
 
-      <div className="space-y-4 mb-8 md:mb-12">
-        {episodes.map((episode) =>
-          isOwner ? (
-            <EpisodeForm
-              key={episode.id}
-              episode={episode}
+        <div className="flex flex-wrap items-center gap-3 md:gap-4 border-t pt-4">
+          {isOwner ? (
+            <VisibilityToggle
               seriesId={series.id}
+              initialIsPublic={series.is_public ?? false}
             />
           ) : (
-            <Link
-              key={episode.id}
-              href={`/series/${series.id}/episodes/${episode.id}`}
-              className="block group"
-            >
-              <div className="border rounded-lg p-4 md:p-6 hover:shadow-lg transition-all">
-                <h2 className="text-lg md:text-xl font-semibold mb-2 group-hover:text-primary">
-                  {episode.title}
-                </h2>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Bài {episode.order_number}
-                </p>
-                {episode.description && (
-                  <p className="text-muted-foreground">{episode.description}</p>
-                )}
-              </div>
-            </Link>
-          )
-        )}
+            <div className="flex flex-wrap items-center gap-3 md:gap-4">
+              <ReportButton seriesId={series.id} />
+              {(series.price ?? 0) > 0 && (
+                <PurchaseButton
+                  seriesId={series.id}
+                  price={series.price || 0}
+                  isPurchased={!!purchase}
+                />
+              )}
+            </div>
+          )}
+          <LikeButton
+            seriesId={series.id}
+            seriesOwnerId={series.user_id}
+            seriesTitle={series.title}
+            initialLiked={!!userLike}
+            likeCount={likes?.length ?? 0}
+          />
+        </div>
+      </div>
+
+      <div className="mb-8 md:mb-12">
+        <h2 className="text-xl font-bold mb-4 flex items-center">
+          <BookOpen className="mr-2 h-5 w-5" />
+          Danh sách bài học
+        </h2>
+        <EpisodesList
+          episodes={episodes}
+          seriesId={series.id}
+          isOwner={isOwner}
+          hasAccess={!!purchase}
+        />
       </div>
 
       <div className="border-t pt-6 md:pt-8">
@@ -188,7 +228,12 @@ export default async function SeriesDetailPage({
 
   // Sidebar content (only for owners)
   const sidebarContent = isOwner ? (
-    <PriceEditForm seriesId={series.id} initialPrice={series.price} />
+    <div className="space-y-6">
+      <div className="bg-card border rounded-xl p-5">
+        <h3 className="font-medium mb-4">Quản lý Series</h3>
+        <PriceEditForm seriesId={series.id} initialPrice={series.price} />
+      </div>
+    </div>
   ) : null;
 
   return <MainWithSidebar main={mainContent} sidebar={sidebarContent} />;

@@ -29,12 +29,22 @@ export default async function TagPage({
     .eq("series_tags.tags.name", params.tagName)
     .eq("is_public", true);
 
+  // Transform the series data to ensure non-null values
+  const transformedSeries =
+    series?.map((s) => ({
+      ...s,
+      profiles: {
+        ...s.profiles,
+        full_name: s.profiles.full_name || "Unnamed User",
+      },
+    })) || [];
+
   return (
     <div className="container py-8">
       <h1 className="text-2xl font-bold mb-6">
         Series tagged with &quot;{params.tagName}&quot;
       </h1>
-      <SeriesList series={series || []} />
+      <SeriesList series={transformedSeries} />
     </div>
   );
 }

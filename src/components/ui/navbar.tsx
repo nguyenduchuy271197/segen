@@ -14,7 +14,16 @@ import {
 } from "./dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { LogOut, Menu, Search, User } from "lucide-react";
+import {
+  LogOut,
+  Menu,
+  Search,
+  User,
+  BookOpen,
+  Bookmark,
+  ShoppingBag,
+  PlusCircle,
+} from "lucide-react";
 import { Input } from "./input";
 import { useState } from "react";
 import { Skeleton } from "./skeleton";
@@ -42,7 +51,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
   };
 
   return (
-    <div className="border-b">
+    <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-20">
       <div className="flex h-16 items-center px-4 md:px-6">
         <Button
           variant="ghost"
@@ -70,7 +79,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
               <Input
                 type="search"
                 placeholder="Tìm kiếm series, tác giả..."
-                className="w-full pl-9"
+                className="w-full pl-9 rounded-full border-primary/20 focus-visible:ring-primary/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -92,14 +101,14 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
+                    className="relative h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-colors"
                   >
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-full w-full">
                       <AvatarImage
                         src={user.user_metadata?.avatar_url}
                         alt={user.user_metadata?.full_name || "User"}
                       />
-                      <AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 text-primary">
                         {user.user_metadata?.full_name?.[0]?.toUpperCase() ||
                           "U"}
                       </AvatarFallback>
@@ -132,6 +141,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                       href="/series"
                       className="cursor-pointer flex w-full items-center"
                     >
+                      <BookOpen className="mr-2 h-4 w-4" />
                       <span>Series của tôi</span>
                     </Link>
                   </DropdownMenuItem>
@@ -140,6 +150,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                       href="/series/new"
                       className="cursor-pointer flex w-full items-center"
                     >
+                      <PlusCircle className="mr-2 h-4 w-4" />
                       <span>Tạo series mới</span>
                     </Link>
                   </DropdownMenuItem>
@@ -148,6 +159,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                       href="/bookmarks"
                       className="cursor-pointer flex w-full items-center"
                     >
+                      <Bookmark className="mr-2 h-4 w-4" />
                       <span>Bookmarks</span>
                     </Link>
                   </DropdownMenuItem>
@@ -156,6 +168,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                       href="/purchases"
                       className="cursor-pointer flex w-full items-center"
                     >
+                      <ShoppingBag className="mr-2 h-4 w-4" />
                       <span>Đã mua</span>
                     </Link>
                   </DropdownMenuItem>
@@ -172,7 +185,9 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
             </>
           ) : (
             <Link href="/login">
-              <Button>Đăng nhập</Button>
+              <Button variant="gradient" className="rounded-full">
+                Đăng nhập
+              </Button>
             </Link>
           )}
         </div>

@@ -1,155 +1,108 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/supabase/provider";
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { createClient } from "@/lib/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Section } from "@/components/ui/section";
+import { ProfileForm } from "@/components/profile/ProfileForm";
+import { MainWithSidebar } from "@/components/layout/MainWithSidebar";
+import { BookOpen, Heart, ShoppingBag } from "lucide-react";
+import { redirect } from "next/navigation";
 
-export default function ProfilePage() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const supabase = createClient();
+export default async function ProfilePage() {
+  const supabase = await createClient();
 
-  const [fullName, setFullName] = useState("");
-  const [bio, setBio] = useState("");
-  const [website, setWebsite] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        if (!user) return;
-
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        if (data) {
-          setFullName(data.full_name || "");
-          setBio(data.bio || "");
-          setAvatarUrl(data.avatar_url || "");
-        }
-      } catch (error) {
-        console.error("Error loading profile:", error);
-      }
-    }
-
-    loadProfile();
-  }, [user, supabase]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!user) return;
-
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.from("profiles").upsert({
-        id: user.id,
-        full_name: fullName,
-        bio,
-        website,
-        avatar_url: avatarUrl,
-        updated_at: new Date().toISOString(),
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Thành công",
-        description: "Thông tin hồ sơ đã được cập nhật",
-      });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Lỗi",
-        description: "Không thể cập nhật thông tin hồ sơ",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+  if (!user) {
+    redirect("/login");
   }
 
-  return (
-    <Section title="Hồ Sơ" description="Quản lý thông tin cá nhân của bạn">
-      <div className="max-w-2xl mx-auto">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex flex-col items-center space-y-4">
-            <Avatar className="w-24 h-24">
-              <AvatarImage src={avatarUrl} />
-              <AvatarFallback>
-                {fullName ? fullName[0]?.toUpperCase() : "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="w-full">
-              <Label htmlFor="avatar_url">Avatar URL</Label>
-              <Input
-                id="avatar_url"
-                type="text"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="https://example.com/avatar.jpg"
-              />
-            </div>
-          </div>
+  // Get user profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select()
+    .eq("id", user.id)
+    .single();
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="fullName">Họ và tên</Label>
-              <Input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Nhập họ và tên của bạn"
-              />
-            </div>
+  // Get user stats
+  const { count: seriesCountValue } = await supabase
+    .from("series")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
 
-            <div>
-              <Label htmlFor="bio">Giới thiệu</Label>
-              <Textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Giới thiệu ngắn về bạn"
-                rows={4}
-              />
-            </div>
+  const { count: likesCountValue } = await supabase
+    .from("likes")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
 
-            <div>
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                type="url"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://example.com"
-              />
-            </div>
-          </div>
+  const { count: purchasesCountValue } = await supabase
+    .from("purchases")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Đang lưu..." : "Lưu thay đổi"}
-          </Button>
-        </form>
-      </div>
-    </Section>
+  const transformedProfile = profile
+    ? {
+        ...profile,
+        full_name: profile.full_name || undefined,
+        avatar_url: profile.avatar_url || undefined,
+        bio: profile.bio || undefined,
+      }
+    : null;
+
+  const mainContent = (
+    <>
+      <Section
+        title="Hồ sơ của tôi"
+        description="Quản lý thông tin cá nhân của bạn"
+      >
+        <div className="bg-card border rounded-xl p-6">
+          <ProfileForm user={user} profile={transformedProfile} />
+        </div>
+      </Section>
+    </>
   );
+
+  const sidebarContent = (
+    <div className="space-y-6">
+      <div className="bg-card border rounded-xl p-6">
+        <div className="flex flex-col items-center text-center">
+          <Avatar className="h-20 w-20 mb-4">
+            <AvatarImage
+              src={profile?.avatar_url || user.user_metadata?.avatar_url}
+            />
+            <AvatarFallback className="bg-primary/10 text-primary text-xl">
+              {profile?.full_name?.[0] || user.email?.[0]?.toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
+          <h3 className="font-medium text-lg">
+            {profile?.full_name ||
+              user.user_metadata?.full_name ||
+              "Người dùng"}
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">{user.email}</p>
+
+          <div className="grid grid-cols-3 gap-2 w-full text-center text-sm">
+            <div className="flex flex-col items-center p-2 bg-muted/50 rounded-lg">
+              <BookOpen className="h-4 w-4 mb-1 text-primary" />
+              <span className="font-medium">{seriesCountValue || 0}</span>
+              <span className="text-xs text-muted-foreground">Series</span>
+            </div>
+            <div className="flex flex-col items-center p-2 bg-muted/50 rounded-lg">
+              <Heart className="h-4 w-4 mb-1 text-primary" />
+              <span className="font-medium">{likesCountValue || 0}</span>
+              <span className="text-xs text-muted-foreground">Likes</span>
+            </div>
+            <div className="flex flex-col items-center p-2 bg-muted/50 rounded-lg">
+              <ShoppingBag className="h-4 w-4 mb-1 text-primary" />
+              <span className="font-medium">{purchasesCountValue || 0}</span>
+              <span className="text-xs text-muted-foreground">Mua</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return <MainWithSidebar main={mainContent} sidebar={sidebarContent} />;
 }

@@ -1,40 +1,75 @@
-import { SeriesWithTags } from "@/types/database";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { formatPrice } from "@/lib/format";
+import { SeriesCard } from "@/components/ui/series-card";
+import { cn } from "@/lib/utils";
+
+type SeriesWithAuthor = {
+  id: string;
+  title: string;
+  description: string | null;
+  is_public: boolean | null;
+  price: number | null;
+  user_id: string;
+  created_at: string;
+  view_count: number | null;
+  profiles: {
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+  series_tags?: {
+    tags: {
+      id: string;
+      name: string;
+    };
+  }[];
+};
 
 interface SeriesListProps {
-  series: SeriesWithTags[];
+  series: SeriesWithAuthor[];
+  className?: string;
+  emptyMessage?: string;
+  emptyAction?: React.ReactNode;
+  columns?: 1 | 2 | 3 | 4;
 }
 
-export function SeriesList({ series }: SeriesListProps) {
+export function SeriesList({
+  series,
+  className,
+  emptyMessage = "Không có series nào",
+  emptyAction,
+  columns = 3,
+}: SeriesListProps) {
+  const columnsClass = {
+    1: "grid-cols-1",
+    2: "grid-cols-1 md:grid-cols-2",
+    3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+    4: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+  };
+
+  if (!series || series.length === 0) {
+    return (
+      <div className="text-center py-12 border rounded-xl bg-card">
+        <p className="text-muted-foreground mb-4">{emptyMessage}</p>
+        {emptyAction}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className={cn(`grid ${columnsClass[columns]} gap-6`, className)}>
       {series.map((item) => (
-        <Link
+        <SeriesCard
           key={item.id}
-          href={`/series/${item.id}`}
-          className="block p-4 rounded-lg border hover:bg-muted/50 transition-colors"
-        >
-          <h2 className="font-semibold">{item.title}</h2>
-          {item.description && (
-            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-              {item.description}
-            </p>
-          )}
-          <div className="mt-4 flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              {formatPrice(item.price)}
-            </span>
-            <div className="flex flex-wrap gap-2 mt-3">
-              {item.series_tags?.map((st) => (
-                <Badge key={st.tags.id} variant="secondary">
-                  {st.tags.name}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </Link>
+          id={item.id}
+          title={item.title}
+          description={item.description}
+          authorName={item.profiles?.full_name || "Unnamed User"}
+          authorAvatar={item.profiles?.avatar_url}
+          createdAt={item.created_at}
+          episodeCount={0}
+          viewCount={item.view_count || 0}
+          tags={item.series_tags?.map((st) => st.tags) || []}
+          price={item.price}
+          isPremium={(item.price || 0) > 0}
+        />
       ))}
     </div>
   );

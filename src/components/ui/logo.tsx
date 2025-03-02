@@ -15,9 +15,15 @@ export function Logo({ className, size = "md", asLink = true }: LogoProps) {
   };
 
   const logoContent = (
-    <div className={cn("font-bold", sizeClasses[size], className)}>
-      <span className="text-blue-500">Edu</span>
-      <span className="text-pink-500">Series</span>
+    <div
+      className={cn(
+        "font-bold flex items-center",
+        sizeClasses[size],
+        className
+      )}
+    >
+      <span className="text-primary">Edu</span>
+      <span className="text-accent">Series</span>
     </div>
   );
 
