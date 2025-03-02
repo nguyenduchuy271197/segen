@@ -3,8 +3,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Section } from "@/components/ui/section";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { MainWithSidebar } from "@/components/layout/MainWithSidebar";
-import { BookOpen, Heart, ShoppingBag } from "lucide-react";
+import { BookOpen, Heart, ShoppingBag, User } from "lucide-react";
 import { redirect } from "next/navigation";
+import { SimpleBreadcrumb } from "@/components/ui/breadcrumb";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -50,8 +51,16 @@ export default async function ProfilePage() {
       }
     : null;
 
+  const breadcrumbItems = [
+    {
+      label: "Hồ sơ",
+      icon: <User className="h-4 w-4" />,
+    },
+  ];
+
   const mainContent = (
     <>
+      <SimpleBreadcrumb items={breadcrumbItems} className="mb-6" />
       <Section
         title="Hồ sơ của tôi"
         description="Quản lý thông tin cá nhân của bạn"

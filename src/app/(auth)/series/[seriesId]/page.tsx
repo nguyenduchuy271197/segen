@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BookOpen, Calendar, Eye } from "lucide-react";
 import { formatDate } from "@/lib/format";
+import { SimpleBreadcrumb } from "@/components/ui/breadcrumb";
 
 export default async function SeriesDetailPage({
   params,
@@ -104,9 +105,21 @@ export default async function SeriesDetailPage({
     return <div>Series not found</div>;
   }
 
+  const breadcrumbItems = [
+    {
+      label: "Series",
+      href: "/series",
+      icon: <BookOpen className="h-4 w-4" />,
+    },
+    {
+      label: series.title,
+    },
+  ];
+
   // Main content
   const mainContent = (
     <div className="max-w-4xl mx-auto">
+      <SimpleBreadcrumb items={breadcrumbItems} className="mb-4" />
       <div className="bg-gradient-to-b from-primary/5 to-transparent rounded-xl p-6 mb-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-6">
           <div className="flex-1">

@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { FollowButton } from "@/components/social/FollowButton";
+import { SimpleBreadcrumb } from "@/components/ui/breadcrumb";
+import { Users } from "lucide-react";
 
 export default async function ProfilePage({
   params,
@@ -34,8 +36,19 @@ export default async function ProfilePage({
     return <div>Profile not found</div>;
   }
 
+  const breadcrumbItems = [
+    {
+      label: "Người dùng",
+      icon: <Users className="h-4 w-4" />,
+    },
+    {
+      label: profile.full_name || "Unnamed User",
+    },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
+      <SimpleBreadcrumb items={breadcrumbItems} className="mb-6" />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">
