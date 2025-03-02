@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
 import { DeleteSeriesButton } from "@/components/series/DeleteSeriesButton";
 import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/ui/section";
+import { CreateSeriesDialog } from "@/components/series/CreateSeriesDialog";
+import Link from "next/link";
 
 export default async function SeriesPage() {
   const supabase = await createClient();
@@ -31,14 +31,7 @@ export default async function SeriesPage() {
         .order("created_at", { ascending: false })
     : { data: [] };
 
-  const createSeriesButton = (
-    <Link href="/series/new">
-      <Button className="gap-2">
-        <PlusIcon className="h-4 w-4" />
-        Tạo Series Mới
-      </Button>
-    </Link>
-  );
+  const createSeriesButton = <CreateSeriesDialog />;
 
   return (
     <Section

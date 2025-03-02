@@ -112,7 +112,7 @@ export function MobileNav() {
                     onClick={closeMenu}
                     className="font-bold text-lg"
                   >
-                    Segen
+                    EduSeries
                   </Link>
                 </SheetTitle>
               )}

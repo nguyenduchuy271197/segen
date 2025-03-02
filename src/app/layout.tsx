@@ -8,7 +8,7 @@ import { Nunito_Sans } from "next/font/google";
 const nunitoSans = Nunito_Sans({ subsets: ["vietnamese"] });
 
 export const metadata: Metadata = {
-  title: "Segen",
+  title: "EduSeries",
   description: "Tạo Series Kiến Thức với AI",
 };
 

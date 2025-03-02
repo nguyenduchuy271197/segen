@@ -23,7 +23,7 @@ export function Nav() {
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center gap-6">
           <Link href="/" className="font-bold text-xl">
-            Segen
+            EduSeries
           </Link>
           <Link
             href="/explore"

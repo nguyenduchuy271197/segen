@@ -7,14 +7,20 @@ import { LoadingSpinner } from "@/components/ui/loading";
 import { SeriesGenerationResponse } from "@/lib/ai/types";
 import { Label } from "@/components/ui/label";
 import { TagInput } from "./TagInput";
+import { useRouter } from "next/navigation";
 
-export function SeriesForm() {
+interface SeriesFormProps {
+  onSuccess?: () => void;
+}
+
+export function SeriesForm({ onSuccess }: SeriesFormProps) {
   const [topic, setTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<string>("");
   const [partialData, setPartialData] =
     useState<Partial<SeriesGenerationResponse> | null>(null);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +54,11 @@ export function SeriesForm() {
                 setStep(data.step);
                 if (data.data) setPartialData(data.data);
               } else if (event === "complete") {
-                window.location.href = `/series/${data.seriesId}`;
+                if (onSuccess) {
+                  onSuccess();
+                } else {
+                  router.push(`/series/${data.seriesId}`);
+                }
                 return;
               } else if (event === "error") {
                 throw new Error(data.message);

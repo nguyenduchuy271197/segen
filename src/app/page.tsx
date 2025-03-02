@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { Section } from "@/components/ui/section";
+import { CreateSeriesDialog } from "@/components/series/CreateSeriesDialog";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -64,9 +65,7 @@ export default async function HomePage() {
           <p className="text-muted-foreground mb-4">
             Chưa có series nổi bật. Hãy tạo series đầu tiên!
           </p>
-          <Link href="/series/new">
-            <Button>Tạo Series Mới</Button>
-          </Link>
+          <CreateSeriesDialog />
         </div>
       )}
     </Section>

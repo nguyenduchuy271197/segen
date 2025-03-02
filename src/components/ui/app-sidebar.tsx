@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "./tooltip";
 import { Skeleton } from "./skeleton";
+import { Logo } from "@/components/ui/logo";
 
 interface AppSidebarProps {
   className?: string;
@@ -128,17 +129,15 @@ export const AppSidebar = forwardRef<
     >
       <div className="flex flex-col h-full py-4 bg-sidebar-background text-sidebar-foreground">
         <div className={cn("mb-6", collapsed ? "px-3 text-center" : "px-6")}>
-          <Link
-            href="/"
-            className={cn(
-              "font-bold rounded-md px-2 py-1",
-              collapsed
-                ? "text-lg text-primary-foreground bg-primary"
-                : "text-xl"
-            )}
-          >
-            {collapsed ? "S" : "Segen"}
-          </Link>
+          {collapsed ? (
+            <Link href="/">
+              <div className="text-lg text-primary-foreground bg-primary rounded-md px-2 py-1">
+                S
+              </div>
+            </Link>
+          ) : (
+            <Logo size="md" />
+          )}
         </div>
 
         <nav className="space-y-1 flex-1 px-3">
