@@ -32,7 +32,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <div className="bg-gradient-to-b from-primary/10 to-background pt-12 pb-8 mb-8">
+      {/* <div className="bg-gradient-to-b from-primary/10 to-background pt-12 pb-8 mb-8">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
             <div className="bg-primary/10 p-3 rounded-full mb-6">
@@ -47,7 +47,7 @@ export default async function HomePage() {
             <CreateSeriesDialog />
           </div>
         </div>
-      </div>
+      </div> */}
 
       <Section
         title="Series Nổi Bật"
@@ -66,7 +66,7 @@ export default async function HomePage() {
                 createdAt={series.created_at}
                 episodeCount={series.episodes?.length || 0}
                 viewCount={series.view_count || 0}
-                tags={series.series_tags?.map(st => st.tags) || []}
+                tags={series.series_tags?.map((st) => st.tags) || []}
                 price={series.price}
                 isPremium={true}
               />
