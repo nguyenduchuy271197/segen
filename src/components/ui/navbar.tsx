@@ -89,21 +89,15 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
               <NotificationDropdown />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-9 w-9 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-colors"
-                  >
-                    <Avatar className="h-full w-full">
-                      <AvatarImage
-                        src={user.user_metadata?.avatar_url}
-                        alt={user.user_metadata?.full_name || "User"}
-                      />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {user.user_metadata?.full_name?.[0]?.toUpperCase() ||
-                          "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
+                  <Avatar className="border-2 border-primary/20 cursor-pointer">
+                    <AvatarImage
+                      src={user.user_metadata?.avatar_url}
+                      alt={user.user_metadata?.full_name || "User"}
+                    />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {user.user_metadata?.full_name?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <div className="flex items-center justify-start gap-2 p-2">

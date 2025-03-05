@@ -36,7 +36,9 @@ export function LoginDialog({ trigger }: LoginDialogProps) {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${
+            window.location.origin
+          }/auth/callback?next=${encodeURIComponent(window.location.pathname)}`,
         },
       });
 
@@ -67,6 +69,9 @@ export function LoginDialog({ trigger }: LoginDialogProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
+          redirectTo: `${
+            window.location.origin
+          }/auth/callback?next=${encodeURIComponent(window.location.pathname)}`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
