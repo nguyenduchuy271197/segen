@@ -3,9 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Section } from "@/components/ui/section";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { MainWithSidebar } from "@/components/layout/MainWithSidebar";
-import { BookOpen, Heart, ShoppingBag, User } from "lucide-react";
+import { BookOpen, Heart, ShoppingBag } from "lucide-react";
 import { redirect } from "next/navigation";
-import { SimpleBreadcrumb } from "@/components/ui/breadcrumb";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -51,16 +50,8 @@ export default async function ProfilePage() {
       }
     : null;
 
-  const breadcrumbItems = [
-    {
-      label: "Hồ sơ",
-      icon: <User className="h-4 w-4" />,
-    },
-  ];
-
   const mainContent = (
     <>
-      <SimpleBreadcrumb items={breadcrumbItems} className="mb-6" />
       <Section
         title="Hồ sơ của tôi"
         description="Quản lý thông tin cá nhân của bạn"
@@ -73,7 +64,7 @@ export default async function ProfilePage() {
   );
 
   const sidebarContent = (
-    <div className="space-y-6">
+    <div className="space-y-6 py-8 md:py-12 px-4 md:px-6">
       <div className="bg-card border rounded-xl p-6">
         <div className="flex flex-col items-center text-center">
           <Avatar className="h-20 w-20 mb-4">
@@ -113,5 +104,11 @@ export default async function ProfilePage() {
     </div>
   );
 
-  return <MainWithSidebar main={mainContent} sidebar={sidebarContent} />;
+  return (
+    <MainWithSidebar
+      main={mainContent}
+      sidebar={sidebarContent}
+      className="p-0 md:p-0"
+    />
+  );
 }

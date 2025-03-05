@@ -53,7 +53,6 @@ export function MobileNav() {
     ...(user
       ? [
           { name: "Series của tôi", href: "/series" },
-          { name: "Tạo series mới", href: "/series/new" },
           { name: "Bookmarks", href: "/bookmarks" },
           { name: "Đã mua", href: "/purchases" },
           { name: "Hồ sơ", href: "/profile" },

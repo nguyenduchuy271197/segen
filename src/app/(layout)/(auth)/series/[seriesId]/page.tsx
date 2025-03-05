@@ -249,5 +249,10 @@ export default async function SeriesDetailPage({
     </div>
   ) : null;
 
-  return <MainWithSidebar main={mainContent} sidebar={sidebarContent} />;
+  return (
+    <MainWithSidebar
+      main={mainContent}
+      sidebar={sidebarContent}
+    />
+  );
 }

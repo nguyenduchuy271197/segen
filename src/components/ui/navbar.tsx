@@ -22,7 +22,6 @@ import {
   BookOpen,
   Bookmark,
   ShoppingBag,
-  PlusCircle,
 } from "lucide-react";
 import { Input } from "./input";
 import { useState } from "react";
@@ -127,15 +126,6 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                     >
                       <BookOpen className="mr-2 h-4 w-4" />
                       <span>Series của tôi</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="/series/new"
-                      className="cursor-pointer flex w-full items-center"
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      <span>Tạo series mới</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

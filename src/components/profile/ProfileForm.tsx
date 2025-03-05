@@ -37,13 +37,6 @@ const formSchema = z.object({
       message: "Giới thiệu không được vượt quá 500 ký tự",
     })
     .optional(),
-  website: z
-    .string()
-    .url({
-      message: "Website phải là một URL hợp lệ",
-    })
-    .optional()
-    .or(z.literal("")),
 });
 
 type ProfileData = {
@@ -82,7 +75,6 @@ export function ProfileForm({ user, profile }: ProfileFormProps) {
         id: user.id,
         full_name: values.full_name,
         bio: values.bio,
-        website: values.website,
         updated_at: new Date().toISOString(),
       });
 
@@ -149,36 +141,22 @@ export function ProfileForm({ user, profile }: ProfileFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="website"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Website</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="https://example.com"
-                  className="edu-input"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Website cá nhân hoặc mạng xã hội của bạn
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Đang cập nhật...
-            </>
-          ) : (
-            "Cập nhật hồ sơ"
-          )}
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            className="w-full lg:w-auto"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Đang cập nhật...
+              </>
+            ) : (
+              "Cập nhật hồ sơ"
+            )}
+          </Button>
+        </div>
       </form>
     </Form>
   );

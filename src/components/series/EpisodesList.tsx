@@ -32,7 +32,7 @@ export function EpisodesList({
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("flex flex-col gap-2", className)}>
       {episodes.map((episode) =>
         isOwner ? (
           <EpisodeForm key={episode.id} episode={episode} seriesId={seriesId} />

@@ -209,26 +209,6 @@ export const AppSidebar = forwardRef<
             )}
           </TooltipProvider>
         </nav>
-
-        {user && !collapsed && (
-          <div className="px-6 mt-6">
-            <div className="p-3 bg-sidebar-accent rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-primary-foreground" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {user.email?.split("@")[0]}
-                  </p>
-                  <p className="text-xs text-sidebar-foreground/70 truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </aside>
   );

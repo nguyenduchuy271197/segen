@@ -4,8 +4,9 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { Loader2 } from "lucide-react";
+import { Compass, Loader2 } from "lucide-react";
 import { BookmarkWithRelations } from "@/types/database";
+import { Button } from "../ui/button";
 
 interface BookmarksListProps {
   initialBookmarks: BookmarkWithRelations[] | null;
@@ -68,8 +69,14 @@ export function BookmarksList({ initialBookmarks }: BookmarksListProps) {
 
   if (bookmarks.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        Chưa có bookmark nào
+      <div className="text-center py-8 border rounded-lg min-h-[40vh] flex flex-col items-center justify-center">
+        <p className="text-muted-foreground mb-4">Chưa có bookmark nào</p>
+        <Button variant="gradient" size="sm" asChild>
+          <Link href="/explore" className="flex items-center gap-2">
+            <Compass className="h-4 w-4" />
+            Khám phá ngay
+          </Link>
+        </Button>
       </div>
     );
   }
