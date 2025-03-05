@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Bookmark,
-  Home,
   Search,
   ShoppingBag,
   User,
@@ -65,12 +64,6 @@ export const AppSidebar = forwardRef<
   };
 
   const navItems = [
-    {
-      name: "Trang chủ",
-      href: "/",
-      icon: Home,
-      public: true,
-    },
     {
       name: "Khám phá",
       href: "/explore",

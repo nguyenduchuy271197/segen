@@ -1,6 +1,3 @@
-import { AuthProvider } from "@/lib/supabase/provider";
-import { Toaster } from "@/components/ui/toaster";
-import { AppLayout } from "@/components/layouts/AppLayout";
 import "./globals.css";
 import type { Metadata } from "next";
 import { Nunito_Sans } from "next/font/google";
@@ -19,12 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      <body className={nunitoSans.className}>
-        <AuthProvider>
-          <AppLayout>{children}</AppLayout>
-          <Toaster />
-        </AuthProvider>
-      </body>
+      <body className={nunitoSans.className}>{children}</body>
     </html>
   );
 }

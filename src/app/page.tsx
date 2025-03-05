@@ -2,7 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { Section } from "@/components/ui/section";
 import { SeriesCard } from "@/components/ui/series-card";
 import { CreateSeriesDialog } from "@/components/series/CreateSeriesDialog";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Compass } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { LandingNavbar } from "@/components/ui/landing-navbar";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -32,19 +35,28 @@ export default async function HomePage() {
 
   return (
     <>
-      <div className="bg-gradient-to-b from-primary/10 to-background pt-12 pb-8 mb-8">
+      <LandingNavbar />
+
+      <div className="pt-24 md:pt-32 bg-gradient-to-b from-primary/10 to-background pb-8 mb-8">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
             <div className="bg-primary/10 p-3 rounded-full mb-6">
               <GraduationCap className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
-              Học và chia sẻ kiến thức với <span className="text-primary">EduSeries</span>
+              Học và chia sẻ kiến thức với{" "}
+              <span className="text-primary">EduSeries</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl">
-              Nền tảng tạo và chia sẻ series kiến thức hiện đại, giúp bạn học tập và giảng dạy hiệu quả
+              Nền tảng tạo và chia sẻ series kiến thức hiện đại, giúp bạn học
+              tập và giảng dạy hiệu quả
             </p>
-            <CreateSeriesDialog />
+            <Button variant="gradient" size="lg">
+              <Link href="/explore" className="flex items-center gap-2">
+                <Compass className="h-4 w-4" />
+                Khám phá ngay
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -66,7 +78,7 @@ export default async function HomePage() {
                 createdAt={series.created_at}
                 episodeCount={series.episodes?.length || 0}
                 viewCount={series.view_count || 0}
-                tags={series.series_tags?.map(st => st.tags) || []}
+                tags={series.series_tags?.map((st) => st.tags) || []}
                 price={series.price}
                 isPremium={true}
               />
