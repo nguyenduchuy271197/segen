@@ -126,9 +126,10 @@ export function MobileNav() {
                     href={item.href}
                     onClick={closeMenu}
                     className={cn(
-                      "py-3 px-4 text-base hover:bg-accent transition-colors",
-                      pathname === item.href &&
-                        "font-medium text-primary bg-accent/50"
+                      "py-3 px-4 text-base",
+                      pathname === item.href
+                        ? "font-medium text-primary bg-primary/10 border-l-4 border-primary"
+                        : "text-foreground"
                     )}
                   >
                     {item.name}
@@ -186,7 +187,7 @@ export function MobileNav() {
             <NotificationDropdown />
           ) : (
             <Link href="/login">
-              <Button size="sm" variant="ghost">
+              <Button size="sm" variant="gradient">
                 Đăng nhập
               </Button>
             </Link>

@@ -153,7 +153,7 @@ export const AppSidebar = forwardRef<
             size="icon"
             onClick={toggleSidebar}
             className={cn(
-              "absolute -right-3 top-6 bg-background border rounded-full shadow-sm h-6 w-6",
+              "absolute -right-3 top-6 bg-background text-foreground border rounded-full shadow-sm h-6 w-6",
               collapsed ? "-right-3" : "-right-3"
             )}
           >
@@ -179,24 +179,25 @@ export const AppSidebar = forwardRef<
                         <Link
                           href={item.href}
                           className={cn(
-                            "flex items-center gap-3 py-2 rounded-lg text-sm transition-colors",
+                            "flex items-center gap-3 py-2 rounded-lg text-sm",
                             collapsed ? "justify-center px-2" : "px-3",
                             isActive(item.href)
                               ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
-                              : "hover:bg-sidebar-accent/50"
+                              : "hover:bg-sidebar-accent/10 text-foreground"
                           )}
                         >
                           <item.icon
                             className={cn(
-                              "flex-shrink-0 transition-all",
+                              "flex-shrink-0",
                               isActive(item.href) ? "h-5 w-5" : "h-5 w-5"
                             )}
                           />
                           {!collapsed && (
                             <span
                               className={cn(
-                                "transition-all",
-                                isActive(item.href) && "font-medium"
+                                isActive(item.href)
+                                  ? "font-medium"
+                                  : "text-foreground"
                               )}
                             >
                               {item.name}

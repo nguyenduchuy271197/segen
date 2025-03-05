@@ -63,17 +63,6 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
         </Button>
 
         <div className="flex-1 flex items-center">
-          <div className="hidden md:flex md:items-center md:mr-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleSidebar}
-              className="hidden md:flex"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
-
           <div className="max-w-md w-full">
             <form onSubmit={handleSearch} className="relative">
               <Input
@@ -185,9 +174,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
             </>
           ) : (
             <Link href="/login">
-              <Button variant="gradient" className="rounded-full">
-                Đăng nhập
-              </Button>
+              <Button variant="gradient">Đăng nhập</Button>
             </Link>
           )}
         </div>
