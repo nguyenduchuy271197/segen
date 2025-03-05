@@ -1,160 +1,203 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { SeriesGenerationResponse } from "@/lib/ai/types";
 
-const formSchema = z.object({
-  title: z
-    .string()
-    .min(5, {
-      message: "Tiêu đề phải có ít nhất 5 ký tự",
-    })
-    .max(100, {
-      message: "Tiêu đề không được vượt quá 100 ký tự",
-    }),
-  description: z
-    .string()
-    .min(10, {
-      message: "Mô tả phải có ít nhất 10 ký tự",
-    })
-    .max(500, {
-      message: "Mô tả không được vượt quá 500 ký tự",
-    }),
-});
+type ProgressState = {
+  step: string;
+  data?: Partial<SeriesGenerationResponse>;
+};
+
+// Custom type for SSE events
+interface MessageEvent extends Event {
+  data: string;
+}
 
 export function SeriesForm() {
+  const [topic, setTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState<ProgressState | null>(null);
   const router = useRouter();
   const { toast } = useToast();
-  const supabase = createClient();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-    },
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!topic.trim()) return;
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    setProgress({ step: "Đang khởi tạo..." });
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const eventSource = new EventSource(
+        `/api/ai/generate-series?topic=${encodeURIComponent(topic)}`
+      );
 
-      if (!user) {
+      eventSource.addEventListener("progress", (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          setProgress(data);
+        } catch (error) {
+          console.error("Error parsing progress data:", error);
+        }
+      });
+
+      eventSource.addEventListener("complete", (event: MessageEvent) => {
+        try {
+          const parsedData = JSON.parse(event.data);
+          eventSource.close();
+          setIsLoading(false);
+
+          toast({
+            title: "Tạo series thành công",
+            description: "Series của bạn đã được tạo thành công.",
+          });
+
+          // Add debugging to see what we're receiving
+          console.log("Complete event data:", parsedData);
+
+          // Check if seriesId exists in the expected location
+          const seriesId = parsedData.data?.seriesId;
+
+          if (seriesId) {
+            router.push(`/series/${seriesId}`);
+          } else {
+            console.error("Series ID not found in response:", parsedData);
+            toast({
+              title: "Lỗi điều hướng",
+              description:
+                "Không thể tìm thấy ID series. Vui lòng kiểm tra danh sách series của bạn.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Error parsing complete data:", error);
+          eventSource.close();
+          setIsLoading(false);
+        }
+      });
+
+      eventSource.addEventListener("error", (event: MessageEvent) => {
+        try {
+          if (event.data) {
+            const data = JSON.parse(event.data);
+            toast({
+              title: "Lỗi tạo series",
+              description: data.message || "Đã xảy ra lỗi khi tạo series.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Lỗi tạo series",
+              description: "Đã xảy ra lỗi khi tạo series.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Error parsing error data:", error);
+        } finally {
+          eventSource.close();
+          setIsLoading(false);
+        }
+      });
+
+      eventSource.onerror = () => {
+        eventSource.close();
+        setIsLoading(false);
+
         toast({
-          title: "Lỗi xác thực",
-          description: "Bạn cần đăng nhập để tạo series",
+          title: "Lỗi kết nối",
+          description: "Không thể kết nối đến máy chủ.",
           variant: "destructive",
         });
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("series")
-        .insert({
-          title: values.title,
-          description: values.description,
-          user_id: user?.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      };
+    } catch {
+      setIsLoading(false);
       toast({
-        title: "Series đã được tạo",
-        description: "Bạn có thể bắt đầu thêm bài học vào series",
-      });
-
-      router.push(`/series/${data.id}`);
-    } catch (error: unknown) {
-      const err = error as { message: string };
-      toast({
-        title: "Lỗi khi tạo series",
-        description: err.message || "Đã có lỗi xảy ra",
+        title: "Lỗi tạo series",
+        description: "Đã xảy ra lỗi khi tạo series.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tiêu đề</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Nhập tiêu đề series"
-                  className="edu-input"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Tiêu đề ngắn gọn, hấp dẫn cho series của bạn
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mô tả</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Mô tả chi tiết về series"
-                  className="edu-input min-h-[120px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Mô tả ngắn gọn về nội dung và mục tiêu của series
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full" disabled={isLoading}>
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="topic">Chủ đề Series</Label>
+          <Input
+            id="topic"
+            placeholder="Nhập chủ đề bạn muốn tạo series (ví dụ: Machine Learning cơ bản)"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            disabled={isLoading}
+            required
+          />
+        </div>
+
+        <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Đang tạo...
             </>
           ) : (
-            "Tạo Series"
+            "Tạo Series với AI"
           )}
         </Button>
       </form>
-    </Form>
+
+      {isLoading && progress && (
+        <div className="mt-6 space-y-4">
+          <div className="bg-muted p-4 rounded-lg">
+            <h3 className="font-medium mb-2">{progress.step}</h3>
+
+            {progress.data && progress.data.title && (
+              <div className="space-y-2 animate-in fade-in-50">
+                <p className="font-semibold">{progress.data.title}</p>
+                {progress.data.description && (
+                  <p className="text-sm text-muted-foreground">
+                    {progress.data.description}
+                  </p>
+                )}
+
+                {progress.data.tags && progress.data.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {progress.data.tags.map((tag: string, i: number) => (
+                      <span
+                        key={i}
+                        className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {progress.data.episodes &&
+                  progress.data.episodes.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm font-medium">Bài học:</p>
+                      <ul className="space-y-1">
+                        {progress.data.episodes.map((episode, i: number) => (
+                          <li key={i} className="text-sm">
+                            {episode.order}. {episode.title}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

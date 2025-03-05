@@ -19,7 +19,7 @@ export default function NewSeriesPage() {
         <div>
           <h1 className="text-3xl font-bold mb-2">Tạo Series Mới</h1>
           <p className="text-muted-foreground">
-            Nhập chủ đề bạn muốn tạo series học tập
+            Nhập chủ đề bạn muốn tạo series học tập và AI sẽ tự động tạo nội dung
           </p>
         </div>
 

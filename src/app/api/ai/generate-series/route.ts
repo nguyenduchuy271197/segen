@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { generateSeries } from "@/lib/ai/deepseek";
 import { NextResponse } from "next/server";
-import type { Series } from "@/types/database";
+import type { EpisodeInsert } from "@/types/database";
 import { SeriesGenerationResponse } from "@/lib/ai/types";
 
 type StreamEvent = {
@@ -14,9 +14,14 @@ type StreamEvent = {
   };
 };
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const supabase = await createClient();
-  const { topic } = await request.json();
+  const url = new URL(request.url);
+  const topic = url.searchParams.get("topic");
+
+  if (!topic) {
+    return NextResponse.json({ error: "Topic is required" }, { status: 400 });
+  }
 
   const {
     data: { user },
@@ -34,7 +39,7 @@ export async function POST(request: Request) {
     data: StreamEvent["data"]
   ) => {
     const json = JSON.stringify({ event, data });
-    await writer.write(encoder.encode(`data: ${json}\n\n`));
+    await writer.write(encoder.encode(`event: ${event}\ndata: ${json}\n\n`));
   };
 
   (async () => {
@@ -50,25 +55,28 @@ export async function POST(request: Request) {
           title: seriesData.title,
           description: seriesData.description,
           user_id: user.id,
+          is_public: false,
+          price: 0,
+          view_count: 0,
         })
         .select()
-        .single<Series>();
+        .single();
 
       if (seriesError) throw seriesError;
 
-      // Create and link tags
+      // Process tags
       if (seriesData.tags && seriesData.tags.length > 0) {
-        await writeToStream("progress", { step: "Đang tạo tags..." });
-
         for (const tagName of seriesData.tags) {
           const normalizedName = tagName.toLowerCase().trim();
 
-          // Get or create tag
-          let { data: tag } = await supabase
+          // Check if tag exists
+          const { data: existingTag } = await supabase
             .from("tags")
             .select()
             .eq("name", normalizedName)
-            .single();
+            .maybeSingle();
+
+          let tag = existingTag;
 
           if (!tag) {
             const { data: newTag } = await supabase
@@ -88,14 +96,19 @@ export async function POST(request: Request) {
           }
         }
       }
+
       await writeToStream("progress", { step: "Đang tạo các bài học..." });
-      const episodesData = seriesData.episodes.map((episode) => ({
-        series_id: series.id,
-        title: episode.title,
-        description: episode.description,
-        content: null,
-        order_number: episode.order,
-      }));
+
+      const episodesData: EpisodeInsert[] = seriesData.episodes.map(
+        (episode) => ({
+          series_id: series.id,
+          title: episode.title,
+          description: episode.description || null,
+          content: null,
+          order_number: episode.order,
+          is_preview: false,
+        })
+      );
 
       const { error: episodesError } = await supabase
         .from("episodes")
@@ -103,7 +116,17 @@ export async function POST(request: Request) {
 
       if (episodesError) throw episodesError;
 
-      await writeToStream("complete", { seriesId: series.id });
+      await writeToStream("complete", {
+        step: "Hoàn thành",
+        seriesId: series.id,
+        data: {
+          title: seriesData.title,
+          description: seriesData.description,
+          tags: seriesData.tags,
+          episodes: seriesData.episodes,
+          // seriesId: series.id,
+        },
+      });
     } catch (error) {
       await writeToStream("error", {
         message:
