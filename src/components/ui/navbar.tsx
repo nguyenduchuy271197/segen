@@ -27,6 +27,7 @@ import {
 import { Input } from "./input";
 import { useState } from "react";
 import { Skeleton } from "./skeleton";
+import { LoginDialog } from "@/components/auth/login-dialog";
 
 interface NavbarProps {
   onToggleSidebar?: () => void;
@@ -173,9 +174,9 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
               </DropdownMenu>
             </>
           ) : (
-            <Link href="/login">
-              <Button variant="gradient">Đăng nhập</Button>
-            </Link>
+            <LoginDialog
+              trigger={<Button variant="gradient">Đăng nhập</Button>}
+            />
           )}
         </div>
       </div>
