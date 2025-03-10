@@ -215,6 +215,8 @@ export function AIContentAssistant({
   const [userTemplates, setUserTemplates] = useState<SavedTemplate[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
+  const [hasModifiedStructure, setHasModifiedStructure] = useState(false);
   const { toast } = useToast();
 
   // Set up DnD sensors
@@ -236,6 +238,13 @@ export function AIContentAssistant({
       }
     }
   }, []);
+
+  // Track structure modifications
+  useEffect(() => {
+    if (isCustomizing) {
+      setHasModifiedStructure(true);
+    }
+  }, [customSections, isCustomizing]);
 
   const addSection = () => {
     setCustomSections([
@@ -302,6 +311,7 @@ export function AIContentAssistant({
 
     setTemplateName("");
     setShowSaveDialog(false);
+    setHasModifiedStructure(false);
   };
 
   const loadUserTemplate = (template: SavedTemplate) => {
@@ -336,8 +346,17 @@ export function AIContentAssistant({
     );
   };
 
+  const handleGenerateClick = () => {
+    if (isCustomizing && hasModifiedStructure) {
+      setShowSaveConfirmation(true);
+    } else {
+      generateContent();
+    }
+  };
+
   const generateContent = async () => {
     setIsLoading(true);
+    setShowSaveConfirmation(false);
 
     try {
       // Generate content with the selected template or custom structure
@@ -701,80 +720,106 @@ export function AIContentAssistant({
                         <SelectItem value="storytelling">Kể chuyện</SelectItem>
                       </SelectContent>
                     </Select>
-                    <div className="flex items-center gap-1.5">
-                      <Button
-                        type="button"
-                        onClick={() => setShowSaveDialog(true)}
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0"
-                        title="Lưu mẫu"
-                      >
-                        <Save className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsCustomizing(false)}
-                      >
-                        Quay lại
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsCustomizing(false)}
+                    >
+                      Quay lại
+                    </Button>
                   </div>
                 </div>
 
-                <div className="max-h-[300px] overflow-y-auto p-1 pb-10">
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={customSections.map((_, i) => `section-${i}`)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {customSections.map((section, index) => (
-                        <SortableItem
-                          key={`section-${index}`}
-                          id={`section-${index}`}
-                          index={index}
-                          section={section}
-                          isLast={index === customSections.length - 1}
-                        />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
+                <div className="border rounded-md bg-muted/20">
+                  {/* Structure summary */}
+                  <div className="p-3 border-b flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        Cấu trúc ({customSections.length} phần)
+                      </span>
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {customSections.length > 0 && customSections[0].title}
+                        {customSections.length > 1 &&
+                          ` → ${
+                            customSections[customSections.length - 1].title
+                          }`}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Kéo thả để sắp xếp
+                    </div>
+                  </div>
+
+                  {/* Scrollable section list with visual indicators */}
+                  <div className="relative">
+                    <div className="max-h-[300px] overflow-y-auto p-3 pb-10 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/30">
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={customSections.map((_, i) => `section-${i}`)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {customSections.map((section, index) => (
+                            <SortableItem
+                              key={`section-${index}`}
+                              id={`section-${index}`}
+                              index={index}
+                              section={section}
+                              isLast={index === customSections.length - 1}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    </div>
+
+                    {/* Scroll indicators */}
+                    <div className="absolute top-0 right-0 w-6 h-6 bg-gradient-to-b from-muted/50 to-transparent pointer-events-none"></div>
+                    <div className="absolute bottom-0 right-0 w-6 h-6 bg-gradient-to-t from-muted/50 to-transparent pointer-events-none"></div>
+                  </div>
                 </div>
 
                 {showSaveDialog && (
-                  <div className="border rounded-md p-3 mt-2 bg-muted/30">
-                    <h4 className="text-sm font-medium mb-2">
-                      Lưu mẫu để sử dụng sau
-                    </h4>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Nhập tên mẫu"
-                        value={templateName}
-                        onChange={(e) => setTemplateName(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button
-                        size="sm"
-                        onClick={saveTemplate}
-                        disabled={!templateName.trim()}
-                      >
-                        Lưu
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setShowSaveDialog(false);
-                          setTemplateName("");
-                        }}
-                      >
-                        Hủy
-                      </Button>
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+                      <h3 className="text-lg font-medium mb-4">
+                        Lưu cấu trúc bài học
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Lưu cấu trúc này để sử dụng lại cho các bài học khác
+                        trong tương lai.
+                      </p>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="template-name">Tên cấu trúc</Label>
+                          <Input
+                            id="template-name"
+                            placeholder="Nhập tên cấu trúc"
+                            value={templateName}
+                            onChange={(e) => setTemplateName(e.target.value)}
+                            autoFocus
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowSaveDialog(false);
+                              setTemplateName("");
+                            }}
+                          >
+                            Hủy
+                          </Button>
+                          <Button
+                            onClick={saveTemplate}
+                            disabled={!templateName.trim()}
+                          >
+                            Lưu
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -783,12 +828,26 @@ export function AIContentAssistant({
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex justify-between items-center">
+          {isCustomizing && (
+            <Button
+              type="button"
+              onClick={() => setShowSaveDialog(true)}
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              disabled={isLoading}
+            >
+              <Save className="h-4 w-4" />
+              Lưu cấu trúc
+            </Button>
+          )}
+
           <Button
             type="button"
-            onClick={generateContent}
+            onClick={handleGenerateClick}
             disabled={isLoading}
-            className="gap-2 w-full md:w-auto"
+            className={cn("gap-2", !isCustomizing && "ml-auto")}
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -798,6 +857,40 @@ export function AIContentAssistant({
             {isLoading ? "Đang tạo nội dung..." : "Tạo nội dung"}
           </Button>
         </DialogFooter>
+
+        {/* Save Confirmation Dialog */}
+        {showSaveConfirmation && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+              <h3 className="text-lg font-medium mb-4">
+                Lưu cấu trúc bài học?
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Bạn đã tùy chỉnh cấu trúc bài học. Bạn có muốn lưu lại để sử
+                dụng sau này không?
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowSaveConfirmation(false);
+                    generateContent();
+                  }}
+                >
+                  Không, tiếp tục
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowSaveConfirmation(false);
+                    setShowSaveDialog(true);
+                  }}
+                >
+                  Lưu cấu trúc
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
