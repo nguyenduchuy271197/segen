@@ -497,239 +497,48 @@ export function AIContentAssistant({
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
-            data-testid="ai-assistant-button"
-          >
-            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            Trợ lý AI
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh] p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle>
-            {isCustomizing
-              ? "Tùy chỉnh cấu trúc bài học"
-              : "Tạo nội dung bài học với AI"}
-          </DialogTitle>
-          <DialogDescription>
-            {isCustomizing
-              ? "Điều chỉnh cấu trúc bài học theo nhu cầu của bạn"
-              : `Chọn cấu trúc bài học phù hợp cho "${episodeTitle}"`}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog>
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
+              data-testid="ai-assistant-button"
+            >
+              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              Trợ lý AI
+            </Button>
+          )}
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh] p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>
+              {isCustomizing
+                ? "Tùy chỉnh cấu trúc bài học"
+                : "Tạo nội dung bài học với AI"}
+            </DialogTitle>
+            <DialogDescription>
+              {isCustomizing
+                ? "Điều chỉnh cấu trúc bài học theo nhu cầu của bạn"
+                : `Chọn cấu trúc bài học phù hợp cho "${episodeTitle}"`}
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-6 py-2 sm:py-4">
-          {!isCustomizing ? (
-            <>
-              {/* Template Selection */}
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
-                  <h3 className="text-sm font-medium">Chọn mẫu cấu trúc</h3>
-                  <div className="flex items-center gap-2">
-                    <Label
-                      htmlFor="style"
-                      className="text-sm whitespace-nowrap"
-                    >
-                      Phong cách viết:
-                    </Label>
-                    <Select
-                      value={style}
-                      onValueChange={(value) => setStyle(value as ContentStyle)}
-                    >
-                      <SelectTrigger id="style" className="w-full sm:w-[140px]">
-                        <SelectValue placeholder="Chọn phong cách" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="conversational">
-                          Trò chuyện
-                        </SelectItem>
-                        <SelectItem value="academic">Học thuật</SelectItem>
-                        <SelectItem value="practical">Thực tiễn</SelectItem>
-                        <SelectItem value="storytelling">Kể chuyện</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Default Templates */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {DEFAULT_TEMPLATES.map((template) => (
-                    <Card
-                      key={template.id}
-                      className={cn(
-                        "cursor-pointer transition-all hover:border-primary/50",
-                        selectedTemplate === template.id
-                          ? "border-primary bg-primary/5"
-                          : ""
-                      )}
-                      onClick={() => setSelectedTemplate(template.id)}
-                    >
-                      <CardContent className="p-3 sm:p-4">
-                        <div className="flex flex-col items-center text-center gap-2">
-                          {template.id === "tutorial" && (
-                            <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
-                          )}
-                          {template.id === "concept" && (
-                            <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
-                          )}
-                          {template.id === "case-study" && (
-                            <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
-                          )}
-                          <h3 className="font-medium text-sm sm:text-base">
-                            {template.name}
-                          </h3>
-                          <p className="text-xs text-muted-foreground">
-                            {template.description}
-                          </p>
-                        </div>
-                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-border/50">
-                          <div className="text-xs text-muted-foreground">
-                            {template.structure.sections.map(
-                              (section, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-1 mb-1"
-                                >
-                                  <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-                                  <span>{section.title}</span>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* User Saved Templates */}
-                {userTemplates.length > 0 && (
-                  <div className="mt-4 sm:mt-6">
-                    <h3 className="text-sm font-medium mb-2">Mẫu đã lưu</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {userTemplates.map((template) => (
-                        <Card
-                          key={template.id}
-                          className="cursor-pointer transition-all hover:border-primary/50"
-                        >
-                          <CardContent className="p-3 sm:p-4">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <div className="flex items-center gap-1">
-                                  <Star className="h-4 w-4 text-amber-500" />
-                                  <h3 className="font-medium text-sm sm:text-base">
-                                    {template.name}
-                                  </h3>
-                                </div>
-                                <div className="mt-2 text-xs text-muted-foreground">
-                                  {template.sections
-                                    .slice(0, 3)
-                                    .map((section, index) => (
-                                      <div
-                                        key={index}
-                                        className="flex items-center gap-1 mb-1"
-                                      >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
-                                        <span>{section.title}</span>
-                                      </div>
-                                    ))}
-                                  {template.sections.length > 3 && (
-                                    <div className="text-xs text-muted-foreground mt-1">
-                                      + {template.sections.length - 3} phần khác
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    loadUserTemplate(template);
-                                  }}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteUserTemplate(template.id);
-                                  }}
-                                >
-                                  <Trash className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <Button
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={() => {
-                    // Initialize custom sections based on selected template
-                    const template = DEFAULT_TEMPLATES.find(
-                      (t) => t.id === selectedTemplate
-                    );
-                    if (template) {
-                      setCustomSections(
-                        template.structure.sections.map((s) => ({
-                          title: s.title,
-                          type: s.type,
-                        }))
-                      );
-                    }
-                    setIsCustomizing(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Tùy chỉnh cấu trúc bài học
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Custom Structure Editor */}
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsCustomizing(false)}
-                      className="mr-1 p-0 h-8 w-8 rounded-full hover:bg-muted"
-                      title="Quay lại chọn mẫu"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      <span className="sr-only">Quay lại</span>
-                    </Button>
-                    <h3 className="font-medium text-sm sm:text-base">
-                      Cấu trúc bài học
-                    </h3>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="space-y-6 py-2 sm:py-4">
+            {!isCustomizing ? (
+              <>
+                {/* Template Selection */}
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
+                    <h3 className="text-sm font-medium">Chọn mẫu cấu trúc</h3>
+                    <div className="flex items-center gap-2">
                       <Label
-                        htmlFor="style-custom"
+                        htmlFor="style"
                         className="text-sm whitespace-nowrap"
                       >
-                        Phong cách:
+                        Phong cách viết:
                       </Label>
                       <Select
                         value={style}
@@ -738,7 +547,7 @@ export function AIContentAssistant({
                         }
                       >
                         <SelectTrigger
-                          id="style-custom"
+                          id="style"
                           className="w-full sm:w-[140px]"
                         >
                           <SelectValue placeholder="Chọn phong cách" />
@@ -756,178 +565,400 @@ export function AIContentAssistant({
                       </Select>
                     </div>
                   </div>
-                </div>
 
-                <div className="border rounded-md bg-muted/20">
-                  {/* Structure summary */}
-                  <div className="p-3 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  {/* Default Templates */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {DEFAULT_TEMPLATES.map((template) => (
+                      <Card
+                        key={template.id}
+                        className={cn(
+                          "cursor-pointer transition-all hover:border-primary/50",
+                          selectedTemplate === template.id
+                            ? "border-primary bg-primary/5"
+                            : ""
+                        )}
+                        onClick={() => setSelectedTemplate(template.id)}
+                      >
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex flex-col items-center text-center gap-2">
+                            {template.id === "tutorial" && (
+                              <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
+                            )}
+                            {template.id === "concept" && (
+                              <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
+                            )}
+                            {template.id === "case-study" && (
+                              <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
+                            )}
+                            <h3 className="font-medium text-sm sm:text-base">
+                              {template.name}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              {template.description}
+                            </p>
+                          </div>
+                          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-border/50">
+                            <div className="text-xs text-muted-foreground">
+                              {template.structure.sections.map(
+                                (section, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-1 mb-1"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                                    <span>{section.title}</span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* User Saved Templates */}
+                  {userTemplates.length > 0 && (
+                    <div className="mt-4 sm:mt-6">
+                      <h3 className="text-sm font-medium mb-2">Mẫu đã lưu</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {userTemplates.map((template) => (
+                          <Card
+                            key={template.id}
+                            className="cursor-pointer transition-all hover:border-primary/50"
+                          >
+                            <CardContent className="p-3 sm:p-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <div className="flex items-center gap-1">
+                                    <Star className="h-4 w-4 text-amber-500" />
+                                    <h3 className="font-medium text-sm sm:text-base">
+                                      {template.name}
+                                    </h3>
+                                  </div>
+                                  <div className="mt-2 text-xs text-muted-foreground">
+                                    {template.sections
+                                      .slice(0, 3)
+                                      .map((section, index) => (
+                                        <div
+                                          key={index}
+                                          className="flex items-center gap-1 mb-1"
+                                        >
+                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
+                                          <span>{section.title}</span>
+                                        </div>
+                                      ))}
+                                    {template.sections.length > 3 && (
+                                      <div className="text-xs text-muted-foreground mt-1">
+                                        + {template.sections.length - 3} phần
+                                        khác
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      loadUserTemplate(template);
+                                    }}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-destructive"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteUserTemplate(template.id);
+                                    }}
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => {
+                      // Initialize custom sections based on selected template
+                      const template = DEFAULT_TEMPLATES.find(
+                        (t) => t.id === selectedTemplate
+                      );
+                      if (template) {
+                        setCustomSections(
+                          template.structure.sections.map((s) => ({
+                            title: s.title,
+                            type: s.type,
+                          }))
+                        );
+                      }
+                      setIsCustomizing(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Tùy chỉnh cấu trúc bài học
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Custom Structure Editor */}
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">
-                        Cấu trúc ({customSections.length} phần)
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className="text-xs font-normal truncate max-w-[150px] sm:max-w-[200px]"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsCustomizing(false)}
+                        className="mr-1 p-0 h-8 w-8 rounded-full hover:bg-muted"
+                        title="Quay lại chọn mẫu"
                       >
-                        {customSections.length > 0 && customSections[0].title}
-                        {customSections.length > 1 &&
-                          ` → ${
-                            customSections[customSections.length - 1].title
-                          }`}
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Kéo thả để sắp xếp
-                    </div>
-                  </div>
-
-                  {/* Scrollable section list with visual indicators */}
-                  <div className="relative">
-                    <div className="max-h-[250px] sm:max-h-[300px] overflow-y-auto p-3 pb-10 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/30">
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <SortableContext
-                          items={customSections.map((_, i) => `section-${i}`)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          {customSections.map((section, index) => (
-                            <SortableItem
-                              key={`section-${index}`}
-                              id={`section-${index}`}
-                              index={index}
-                              section={section}
-                              isLast={index === customSections.length - 1}
-                            />
-                          ))}
-                        </SortableContext>
-                      </DndContext>
-                    </div>
-
-                    {/* Scroll indicators */}
-                    <div className="absolute top-0 right-0 w-6 h-6 bg-gradient-to-b from-muted/50 to-transparent pointer-events-none"></div>
-                    <div className="absolute bottom-0 right-0 w-6 h-6 bg-gradient-to-t from-muted/50 to-transparent pointer-events-none"></div>
-                  </div>
-                </div>
-
-                {showSaveDialog && (
-                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-background border rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto shadow-lg">
-                      <h3 className="text-lg font-medium mb-4">
-                        Lưu cấu trúc bài học
+                        <ArrowLeft className="h-4 w-4" />
+                        <span className="sr-only">Quay lại</span>
+                      </Button>
+                      <h3 className="font-medium text-sm sm:text-base">
+                        Cấu trúc bài học
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Lưu cấu trúc này để sử dụng lại cho các bài học khác
-                        trong tương lai.
-                      </p>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="template-name">Tên cấu trúc</Label>
-                          <Input
-                            id="template-name"
-                            placeholder="Nhập tên cấu trúc"
-                            value={templateName}
-                            onChange={(e) => setTemplateName(e.target.value)}
-                            autoFocus
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setShowSaveDialog(false);
-                              setTemplateName("");
-                            }}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Label
+                          htmlFor="style-custom"
+                          className="text-sm whitespace-nowrap"
+                        >
+                          Phong cách:
+                        </Label>
+                        <Select
+                          value={style}
+                          onValueChange={(value) =>
+                            setStyle(value as ContentStyle)
+                          }
+                        >
+                          <SelectTrigger
+                            id="style-custom"
+                            className="w-full sm:w-[140px]"
                           >
-                            Hủy
-                          </Button>
-                          <Button
-                            onClick={saveTemplate}
-                            disabled={!templateName.trim()}
-                          >
-                            Lưu
-                          </Button>
-                        </div>
+                            <SelectValue placeholder="Chọn phong cách" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="conversational">
+                              Trò chuyện
+                            </SelectItem>
+                            <SelectItem value="academic">Học thuật</SelectItem>
+                            <SelectItem value="practical">Thực tiễn</SelectItem>
+                            <SelectItem value="storytelling">
+                              Kể chuyện
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
 
-        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-3">
-          {isCustomizing && (
-            <Button
-              type="button"
-              onClick={() => setShowSaveDialog(true)}
-              size="sm"
-              variant="outline"
-              className="gap-1 w-full sm:w-auto"
-              disabled={isLoading}
-            >
-              <Save className="h-4 w-4" />
-              Lưu cấu trúc
-            </Button>
-          )}
+                  <div className="border rounded-md bg-muted/20">
+                    {/* Structure summary */}
+                    <div className="p-3 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">
+                          Cấu trúc ({customSections.length} phần)
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="text-xs font-normal truncate max-w-[150px] sm:max-w-[200px]"
+                        >
+                          {customSections.length > 0 && customSections[0].title}
+                          {customSections.length > 1 &&
+                            ` → ${
+                              customSections[customSections.length - 1].title
+                            }`}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Kéo thả để sắp xếp
+                      </div>
+                    </div>
 
-          <Button
-            type="button"
-            onClick={handleGenerateClick}
-            disabled={isLoading}
-            className={cn(
-              "gap-2 w-full sm:w-auto",
-              !isCustomizing && "sm:ml-auto"
+                    {/* Scrollable section list with visual indicators */}
+                    <div className="relative">
+                      <div className="max-h-[250px] sm:max-h-[300px] overflow-y-auto p-3 pb-10 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/30">
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <SortableContext
+                            items={customSections.map((_, i) => `section-${i}`)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {customSections.map((section, index) => (
+                              <SortableItem
+                                key={`section-${index}`}
+                                id={`section-${index}`}
+                                index={index}
+                                section={section}
+                                isLast={index === customSections.length - 1}
+                              />
+                            ))}
+                          </SortableContext>
+                        </DndContext>
+                      </div>
+
+                      {/* Scroll indicators */}
+                      <div className="absolute top-0 right-0 w-6 h-6 bg-gradient-to-b from-muted/50 to-transparent pointer-events-none"></div>
+                      <div className="absolute bottom-0 right-0 w-6 h-6 bg-gradient-to-t from-muted/50 to-transparent pointer-events-none"></div>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+
+          <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-3">
+            {isCustomizing ? (
+              <>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <Button
+                    type="button"
+                    onClick={() => setShowSaveDialog(true)}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1 w-full sm:w-auto"
+                    disabled={isLoading}
+                  >
+                    <Save className="h-4 w-4" />
+                    Lưu cấu trúc
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsCustomizing(false)}
+                    className="gap-1 w-full sm:w-auto sm:hidden"
+                    disabled={isLoading}
+                  >
+                    Quay lại
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleGenerateClick}
+                  disabled={isLoading}
+                  className="gap-2 w-full sm:w-auto"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {isLoading ? "Đang tạo nội dung..." : "Tạo nội dung"}
+                </Button>
+              </>
             ) : (
-              <Sparkles className="h-4 w-4" />
+              <Button
+                type="button"
+                onClick={handleGenerateClick}
+                disabled={isLoading}
+                className="gap-2 w-full sm:w-auto sm:ml-auto"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                {isLoading ? "Đang tạo nội dung..." : "Tạo nội dung"}
+              </Button>
             )}
-            {isLoading ? "Đang tạo nội dung..." : "Tạo nội dung"}
-          </Button>
-        </DialogFooter>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Save Confirmation Dialog */}
-        {showSaveConfirmation && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-background border rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto shadow-lg">
-              <h3 className="text-lg font-medium mb-4">
-                Lưu cấu trúc bài học?
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Bạn đã tùy chỉnh cấu trúc bài học. Bạn có muốn lưu lại để sử
-                dụng sau này không?
-              </p>
-              <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={() => {
-                    setShowSaveConfirmation(false);
-                    generateContent();
-                  }}
-                >
-                  Không, tiếp tục
-                </Button>
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={() => {
-                    setShowSaveConfirmation(false);
-                    setShowSaveDialog(true);
-                  }}
-                >
-                  Lưu cấu trúc
-                </Button>
-              </div>
+      {/* Save Template Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Lưu cấu trúc bài học</DialogTitle>
+            <DialogDescription>
+              Lưu cấu trúc này để sử dụng lại cho các bài học khác trong tương
+              lai.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="template-name">Tên cấu trúc</Label>
+              <Input
+                id="template-name"
+                placeholder="Nhập tên cấu trúc"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                autoFocus
+              />
             </div>
           </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSaveDialog(false);
+                setTemplateName("");
+              }}
+            >
+              Hủy
+            </Button>
+            <Button onClick={saveTemplate} disabled={!templateName.trim()}>
+              Lưu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Confirmation Dialog */}
+      <Dialog
+        open={showSaveConfirmation}
+        onOpenChange={setShowSaveConfirmation}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Lưu cấu trúc bài học?</DialogTitle>
+            <DialogDescription>
+              Bạn đã tùy chỉnh cấu trúc bài học. Bạn có muốn lưu lại để sử dụng
+              sau này không?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                setShowSaveConfirmation(false);
+                generateContent();
+              }}
+            >
+              Không, tiếp tục
+            </Button>
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => {
+                setShowSaveConfirmation(false);
+                setShowSaveDialog(true);
+              }}
+            >
+              Lưu cấu trúc
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
