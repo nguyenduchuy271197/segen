@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { Episode } from "@/types/database";
-import { Loader2, RefreshCw, Sparkles, Lock, Eye } from "lucide-react";
+import { Eye, Lock, Sparkles } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -17,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { AIContentAssistant } from "@/components/series/AIContentAssistant";
+import { Button } from "@/components/ui/button";
 
 interface EpisodeFormProps {
   episode: Episode;
@@ -24,48 +25,9 @@ interface EpisodeFormProps {
 }
 
 export function EpisodeForm({ episode, seriesId }: EpisodeFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [isPreview, setIsPreview] = useState(episode.is_preview);
   const { toast } = useToast();
   const supabase = createClient();
-
-  const handleGenerate = async () => {
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/ai/generate-episode", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seriesId,
-          episodeId: episode.id,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Không thể tạo nội dung");
-      }
-
-      toast({
-        title: "Tạo nội dung thành công",
-        description: "Nội dung bài học đã được tạo",
-      });
-
-      window.location.reload();
-    } catch (error) {
-      toast({
-        title: "Lỗi khi tạo nội dung",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Đã xảy ra lỗi không mong muốn",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const togglePreview = async () => {
     try {
@@ -94,6 +56,12 @@ export function EpisodeForm({ episode, seriesId }: EpisodeFormProps) {
         variant: "destructive",
       });
     }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleContentGenerated = (content: string) => {
+    // Refresh the page to show the new content
+    window.location.reload();
   };
 
   return (
@@ -161,28 +129,27 @@ export function EpisodeForm({ episode, seriesId }: EpisodeFormProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  onClick={handleGenerate}
-                  disabled={isLoading}
-                  variant={episode.content ? "outline" : "default"}
-                  size="icon"
-                  className="w-10 h-10"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : episode.content ? (
-                    <RefreshCw className="h-5 w-5" />
-                  ) : (
-                    <Sparkles className="h-5 w-5" />
-                  )}
-                </Button>
+                <AIContentAssistant
+                  episodeId={episode.id}
+                  seriesId={seriesId}
+                  seriesTitle=""
+                  episodeTitle={episode.title}
+                  onContentGenerated={handleContentGenerated}
+                  trigger={
+                    <Button
+                      variant={episode.content ? "outline" : "default"}
+                      size="icon"
+                      className="w-10 h-10"
+                    >
+                      <Sparkles className="h-5 w-5" />
+                    </Button>
+                  }
+                />
               </TooltipTrigger>
               <TooltipContent>
-                {isLoading
-                  ? "Đang tạo..."
-                  : episode.content
-                  ? "Tạo lại nội dung"
-                  : "Tạo nội dung"}
+                {episode.content
+                  ? "Tùy chỉnh và tạo lại nội dung bài học"
+                  : "Tạo nội dung bài học với AI"}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

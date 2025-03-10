@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -139,6 +139,7 @@ interface AIContentAssistantProps {
   seriesTitle: string;
   episodeTitle: string;
   onContentGenerated: (content: string) => void;
+  trigger?: ReactNode;
 }
 
 type ContentStyle =
@@ -156,6 +157,7 @@ export function AIContentAssistant({
   seriesTitle,
   episodeTitle,
   onContentGenerated,
+  trigger,
 }: AIContentAssistantProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("quick");
@@ -308,15 +310,17 @@ export function AIContentAssistant({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          data-testid="ai-assistant-button"
-        >
-          <Sparkles className="h-4 w-4" />
-          Trợ lý AI
-        </Button>
+        {trigger || (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            data-testid="ai-assistant-button"
+          >
+            <Sparkles className="h-4 w-4" />
+            Trợ lý AI
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
