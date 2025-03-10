@@ -20,26 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Sparkles,
-  Loader2,
-  BookOpen,
-  Lightbulb,
-  GraduationCap,
-  Plus,
-  Trash,
-  Save,
-  Star,
-  GripVertical,
-  PlusCircle,
-  ArrowLeft,
-} from "lucide-react";
+import { Sparkles, Loader2, ArrowLeft, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { EpisodeTemplate } from "@/lib/ai/types";
-import { cn } from "@/lib/utils";
 import {
   DndContext,
   closestCenter,
@@ -53,124 +37,18 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { SortableItem } from "./SortableItem";
+import {
+  TemplateSelection,
+  DEFAULT_TEMPLATES,
+  SavedTemplate,
+  ContentStyle,
+} from "./TemplateSelection";
 
-// Predefined templates
-const DEFAULT_TEMPLATES: EpisodeTemplate[] = [
-  {
-    id: "tutorial",
-    name: "Hướng dẫn thực hành",
-    description: "Mẫu dành cho bài học hướng dẫn thực hành với các bước cụ thể",
-    structure: {
-      sections: [
-        {
-          title: "Giới thiệu",
-          type: "concept",
-          keyPoints: ["Tổng quan về chủ đề", "Mục tiêu của bài học"],
-        },
-        {
-          title: "Kiến thức nền tảng",
-          type: "concept",
-        },
-        {
-          title: "Hướng dẫn từng bước",
-          type: "example",
-        },
-        {
-          title: "Ví dụ thực tế",
-          type: "example",
-        },
-        {
-          title: "Bài tập thực hành",
-          type: "exercise",
-        },
-        {
-          title: "Tổng kết",
-          type: "summary",
-        },
-      ],
-    },
-  },
-  {
-    id: "concept",
-    name: "Giải thích khái niệm",
-    description: "Mẫu dành cho bài học giải thích khái niệm lý thuyết",
-    structure: {
-      sections: [
-        {
-          title: "Giới thiệu khái niệm",
-          type: "concept",
-        },
-        {
-          title: "Định nghĩa và giải thích",
-          type: "concept",
-        },
-        {
-          title: "Ví dụ minh họa",
-          type: "example",
-        },
-        {
-          title: "Ứng dụng thực tế",
-          type: "example",
-        },
-        {
-          title: "Câu hỏi ôn tập",
-          type: "exercise",
-        },
-        {
-          title: "Tổng kết",
-          type: "summary",
-        },
-      ],
-    },
-  },
-  {
-    id: "case-study",
-    name: "Nghiên cứu tình huống",
-    description: "Mẫu dành cho bài học phân tích tình huống thực tế",
-    structure: {
-      sections: [
-        {
-          title: "Bối cảnh",
-          type: "concept",
-        },
-        {
-          title: "Vấn đề",
-          type: "concept",
-        },
-        {
-          title: "Phân tích",
-          type: "example",
-        },
-        {
-          title: "Giải pháp",
-          type: "example",
-        },
-        {
-          title: "Bài học kinh nghiệm",
-          type: "summary",
-        },
-        {
-          title: "Câu hỏi thảo luận",
-          type: "exercise",
-        },
-      ],
-    },
-  },
-];
-
-// User saved templates storage key
-const USER_TEMPLATES_KEY = "user_saved_templates";
-
-interface SavedTemplate {
-  id: string;
-  name: string;
-  sections: Array<{ title: string; type: string }>;
-  createdAt: string;
-}
+// Constants
+const USER_TEMPLATES_KEY = "user_templates";
 
 interface AIContentAssistantProps {
   episodeId: string;
@@ -181,12 +59,7 @@ interface AIContentAssistantProps {
   trigger?: ReactNode;
 }
 
-type ContentStyle =
-  | "conversational"
-  | "academic"
-  | "practical"
-  | "storytelling";
-type SectionType = "concept" | "example" | "exercise" | "summary";
+export type SectionType = "concept" | "example" | "exercise" | "summary";
 
 export function AIContentAssistant({
   episodeId,
@@ -409,93 +282,6 @@ export function AIContentAssistant({
     }
   };
 
-  // SortableItem component for drag and drop
-  function SortableItem({
-    id,
-    index,
-    section,
-    isLast,
-  }: {
-    id: string;
-    index: number;
-    section: { title: string; type: SectionType };
-    isLast?: boolean;
-  }) {
-    const { attributes, listeners, setNodeRef, transform, transition } =
-      useSortable({ id });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-    };
-
-    return (
-      <div ref={setNodeRef} style={style} className="mb-2 group relative">
-        <div className="border rounded-md bg-card">
-          <div className="p-2 sm:p-3">
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div
-                {...attributes}
-                {...listeners}
-                className="cursor-grab active:cursor-grabbing"
-              >
-                <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1">
-                <Input
-                  value={section.title}
-                  onChange={(e) => updateSectionTitle(index, e.target.value)}
-                  placeholder="Tiêu đề phần"
-                  className="text-sm sm:text-base h-8 sm:h-10"
-                />
-              </div>
-              <Button
-                type="button"
-                onClick={() => removeSection(index)}
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 sm:h-8 sm:w-8"
-                disabled={customSections.length <= 2}
-              >
-                <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Insert button that appears on hover or focus */}
-        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-10">
-          <Button
-            type="button"
-            onClick={() => insertSectionAfter(index)}
-            size="icon"
-            variant="outline"
-            className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-background border-primary/30 shadow-sm"
-          >
-            <PlusCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
-            <span className="sr-only">Chèn phần mới</span>
-          </Button>
-        </div>
-
-        {/* Add section button after the last item */}
-        {isLast && (
-          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 mt-2">
-            <Button
-              type="button"
-              onClick={addSection}
-              size="sm"
-              variant="outline"
-              className="h-6 sm:h-7 px-2 sm:px-3 text-xs gap-1 sm:gap-1.5 border-dashed border-muted-foreground/30"
-            >
-              <PlusCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span>Thêm phần cuối</span>
-            </Button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <>
       <Dialog>
@@ -528,190 +314,30 @@ export function AIContentAssistant({
 
           <div className="space-y-6 py-2 sm:py-4">
             {!isCustomizing ? (
-              <>
-                {/* Template Selection */}
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
-                    <h3 className="text-sm font-medium">Chọn mẫu cấu trúc</h3>
-                    <div className="flex items-center gap-2">
-                      <Label
-                        htmlFor="style"
-                        className="text-sm whitespace-nowrap"
-                      >
-                        Phong cách viết:
-                      </Label>
-                      <Select
-                        value={style}
-                        onValueChange={(value) =>
-                          setStyle(value as ContentStyle)
-                        }
-                      >
-                        <SelectTrigger
-                          id="style"
-                          className="w-full sm:w-[140px]"
-                        >
-                          <SelectValue placeholder="Chọn phong cách" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="conversational">
-                            Trò chuyện
-                          </SelectItem>
-                          <SelectItem value="academic">Học thuật</SelectItem>
-                          <SelectItem value="practical">Thực tiễn</SelectItem>
-                          <SelectItem value="storytelling">
-                            Kể chuyện
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Default Templates */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {DEFAULT_TEMPLATES.map((template) => (
-                      <Card
-                        key={template.id}
-                        className={cn(
-                          "cursor-pointer transition-all hover:border-primary/50",
-                          selectedTemplate === template.id
-                            ? "border-primary bg-primary/5"
-                            : ""
-                        )}
-                        onClick={() => setSelectedTemplate(template.id)}
-                      >
-                        <CardContent className="p-3 sm:p-4">
-                          <div className="flex flex-col items-center text-center gap-2">
-                            {template.id === "tutorial" && (
-                              <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
-                            )}
-                            {template.id === "concept" && (
-                              <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
-                            )}
-                            {template.id === "case-study" && (
-                              <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
-                            )}
-                            <h3 className="font-medium text-sm sm:text-base">
-                              {template.name}
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                              {template.description}
-                            </p>
-                          </div>
-                          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-border/50">
-                            <div className="text-xs text-muted-foreground">
-                              {template.structure.sections.map(
-                                (section, index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-center gap-1 mb-1"
-                                  >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-                                    <span>{section.title}</span>
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* User Saved Templates */}
-                  {userTemplates.length > 0 && (
-                    <div className="mt-4 sm:mt-6">
-                      <h3 className="text-sm font-medium mb-2">Mẫu đã lưu</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {userTemplates.map((template) => (
-                          <Card
-                            key={template.id}
-                            className="cursor-pointer transition-all hover:border-primary/50"
-                          >
-                            <CardContent className="p-3 sm:p-4">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <div className="flex items-center gap-1">
-                                    <Star className="h-4 w-4 text-amber-500" />
-                                    <h3 className="font-medium text-sm sm:text-base">
-                                      {template.name}
-                                    </h3>
-                                  </div>
-                                  <div className="mt-2 text-xs text-muted-foreground">
-                                    {template.sections
-                                      .slice(0, 3)
-                                      .map((section, index) => (
-                                        <div
-                                          key={index}
-                                          className="flex items-center gap-1 mb-1"
-                                        >
-                                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
-                                          <span>{section.title}</span>
-                                        </div>
-                                      ))}
-                                    {template.sections.length > 3 && (
-                                      <div className="text-xs text-muted-foreground mt-1">
-                                        + {template.sections.length - 3} phần
-                                        khác
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      loadUserTemplate(template);
-                                    }}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-destructive"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      deleteUserTemplate(template.id);
-                                    }}
-                                  >
-                                    <Trash className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <Button
-                    variant="outline"
-                    className="w-full mt-2"
-                    onClick={() => {
-                      // Initialize custom sections based on selected template
-                      const template = DEFAULT_TEMPLATES.find(
-                        (t) => t.id === selectedTemplate
-                      );
-                      if (template) {
-                        setCustomSections(
-                          template.structure.sections.map((s) => ({
-                            title: s.title,
-                            type: s.type,
-                          }))
-                        );
-                      }
-                      setIsCustomizing(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Tùy chỉnh cấu trúc bài học
-                  </Button>
-                </div>
-              </>
+              <TemplateSelection
+                selectedTemplate={selectedTemplate}
+                setSelectedTemplate={setSelectedTemplate}
+                style={style}
+                setStyle={setStyle}
+                userTemplates={userTemplates}
+                loadUserTemplate={loadUserTemplate}
+                deleteUserTemplate={deleteUserTemplate}
+                onCustomizeClick={() => {
+                  // Initialize custom sections based on selected template
+                  const template = DEFAULT_TEMPLATES.find(
+                    (t) => t.id === selectedTemplate
+                  );
+                  if (template) {
+                    setCustomSections(
+                      template.structure.sections.map((s) => ({
+                        title: s.title,
+                        type: s.type,
+                      }))
+                    );
+                  }
+                  setIsCustomizing(true);
+                }}
+              />
             ) : (
               <>
                 {/* Custom Structure Editor */}
@@ -799,18 +425,25 @@ export function AIContentAssistant({
                           onDragEnd={handleDragEnd}
                         >
                           <SortableContext
-                            items={customSections.map((_, i) => `section-${i}`)}
+                            items={customSections.map((_, i) => `item-${i}`)}
                             strategy={verticalListSortingStrategy}
                           >
-                            {customSections.map((section, index) => (
-                              <SortableItem
-                                key={`section-${index}`}
-                                id={`section-${index}`}
-                                index={index}
-                                section={section}
-                                isLast={index === customSections.length - 1}
-                              />
-                            ))}
+                            <div className="space-y-1">
+                              {customSections.map((section, index) => (
+                                <SortableItem
+                                  key={`item-${index}`}
+                                  id={`item-${index}`}
+                                  index={index}
+                                  section={section}
+                                  isLast={index === customSections.length - 1}
+                                  updateSectionTitle={updateSectionTitle}
+                                  removeSection={removeSection}
+                                  insertSectionAfter={insertSectionAfter}
+                                  addSection={addSection}
+                                  minSections={customSections.length}
+                                />
+                              ))}
+                            </div>
                           </SortableContext>
                         </DndContext>
                       </div>
