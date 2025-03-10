@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, Edit, BookmarkPlus, Share2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, Edit, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EpisodeContent } from "./EpisodeContent";
 import { BookmarkButton } from "./BookmarkButton";
@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { createClient } from "@/lib/supabase/client";
 
 interface EpisodeViewProps {
   content: string;
@@ -27,6 +28,39 @@ export function EpisodeView({
   seriesId,
 }: EpisodeViewProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [seriesTitle, setSeriesTitle] = useState("");
+  const [episodeTitle, setEpisodeTitle] = useState("");
+
+  // Fetch series and episode titles
+  useEffect(() => {
+    const fetchTitles = async () => {
+      const supabase = createClient();
+
+      // Fetch series title
+      const { data: seriesData } = await supabase
+        .from("series")
+        .select("title")
+        .eq("id", seriesId)
+        .single();
+
+      if (seriesData) {
+        setSeriesTitle(seriesData.title);
+      }
+
+      // Fetch episode title
+      const { data: episodeData } = await supabase
+        .from("episodes")
+        .select("title")
+        .eq("id", episodeId)
+        .single();
+
+      if (episodeData) {
+        setEpisodeTitle(episodeData.title);
+      }
+    };
+
+    fetchTitles();
+  }, [seriesId, episodeId]);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -102,6 +136,9 @@ export function EpisodeView({
           content={content}
           isEditable={isOwner && isEditing}
           episodeId={episodeId}
+          seriesId={seriesId}
+          seriesTitle={seriesTitle}
+          episodeTitle={episodeTitle}
         />
       </div>
     </Card>

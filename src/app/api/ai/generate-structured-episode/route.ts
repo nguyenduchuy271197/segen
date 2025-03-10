@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { generateEpisodeContent } from "@/lib/ai/deepseek";
+import { generateStructuredEpisode } from "@/lib/ai/deepseek";
 import { NextResponse } from "next/server";
 import type { Series, Episode } from "@/types/database";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { seriesId, episodeId, options } = await request.json();
+  const { seriesId, episodeId, structure } = await request.json();
 
   const {
     data: { user },
@@ -37,27 +37,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate content with options
-    const content = await generateEpisodeContent(
+    // Generate structured content
+    const content = await generateStructuredEpisode(
       series.title,
       episode.title,
-      options
+      structure
     );
-
-    // Update episode with generated content
-    const { error: updateError } = await supabase
-      .from("episodes")
-      .update({
-        content: content.content,
-      })
-      .eq("id", episodeId)
-      .eq("series_id", seriesId);
-
-    if (updateError) throw updateError;
 
     return NextResponse.json({ content });
   } catch (error) {
-    console.error("Error generating episode content:", error);
+    console.error("Error generating structured episode content:", error);
     return NextResponse.json(
       { error: "Không thể tạo nội dung bài học" },
       { status: 500 }

@@ -10,12 +10,18 @@ interface EpisodeContentProps {
   content: string;
   isEditable: boolean;
   episodeId: string;
+  seriesId?: string;
+  seriesTitle?: string;
+  episodeTitle?: string;
 }
 
 export function EpisodeContent({
   content,
   isEditable,
   episodeId,
+  seriesId,
+  seriesTitle,
+  episodeTitle,
 }: EpisodeContentProps) {
   const [saveStatus, setSaveStatus] = useState<"saving" | "saved" | "error">(
     "saved"
@@ -54,6 +60,10 @@ export function EpisodeContent({
         content={content}
         isEditable={isEditable}
         onChange={(newContent) => setLocalContent(newContent)}
+        episodeId={episodeId}
+        seriesId={seriesId}
+        seriesTitle={seriesTitle}
+        episodeTitle={episodeTitle}
       />
       {isEditable && <SaveIndicator status={saveStatus} />}
     </div>

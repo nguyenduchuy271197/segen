@@ -19,9 +19,14 @@ import { SeriesGenerationResponse } from "@/lib/ai/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+// Add this type definition near the top of the file
+type ProgressData = Partial<SeriesGenerationResponse> & {
+  seriesId?: string;
+};
+
 type ProgressState = {
   step: string;
-  data?: Partial<SeriesGenerationResponse>;
+  data?: ProgressData;
 };
 
 // Custom type for SSE events
@@ -297,7 +302,8 @@ export function CreateSeriesDialog() {
                               </h5>
                             </div>
 
-                            {(i < activeEpisodeIndex ||
+                            {((activeEpisodeIndex !== null &&
+                              i < activeEpisodeIndex) ||
                               progress.step === "Hoàn thành") && (
                               <Check className="h-4 w-4 text-green-500" />
                             )}
