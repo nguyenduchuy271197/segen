@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Sparkles,
   Loader2,
@@ -29,8 +28,6 @@ import {
   GraduationCap,
   Plus,
   Trash,
-  ChevronDown,
-  ChevronUp,
   Save,
   Star,
   GripVertical,
@@ -188,7 +185,6 @@ type ContentStyle =
   | "academic"
   | "practical"
   | "storytelling";
-type DifficultyLevel = "beginner" | "intermediate" | "advanced";
 type SectionType = "concept" | "example" | "exercise" | "summary";
 
 export function AIContentAssistant({
@@ -435,20 +431,21 @@ export function AIContentAssistant({
     return (
       <div ref={setNodeRef} style={style} className="mb-2 group relative">
         <div className="border rounded-md bg-card">
-          <div className="p-3">
-            <div className="flex items-center gap-2">
+          <div className="p-2 sm:p-3">
+            <div className="flex items-center gap-1 sm:gap-2">
               <div
                 {...attributes}
                 {...listeners}
                 className="cursor-grab active:cursor-grabbing"
               >
-                <GripVertical className="h-5 w-5 text-muted-foreground" />
+                <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               </div>
               <div className="flex-1">
                 <Input
                   value={section.title}
                   onChange={(e) => updateSectionTitle(index, e.target.value)}
                   placeholder="Tiêu đề phần"
+                  className="text-sm sm:text-base h-8 sm:h-10"
                 />
               </div>
               <Button
@@ -456,10 +453,10 @@ export function AIContentAssistant({
                 onClick={() => removeSection(index)}
                 size="icon"
                 variant="ghost"
-                className="h-8 w-8"
+                className="h-7 w-7 sm:h-8 sm:w-8"
                 disabled={customSections.length <= 2}
               >
-                <Trash className="h-4 w-4" />
+                <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
@@ -472,9 +469,9 @@ export function AIContentAssistant({
             onClick={() => insertSectionAfter(index)}
             size="icon"
             variant="outline"
-            className="h-6 w-6 rounded-full bg-background border-primary/30 shadow-sm"
+            className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-background border-primary/30 shadow-sm"
           >
-            <PlusCircle className="h-3.5 w-3.5 text-primary" />
+            <PlusCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
             <span className="sr-only">Chèn phần mới</span>
           </Button>
         </div>
@@ -487,9 +484,9 @@ export function AIContentAssistant({
               onClick={addSection}
               size="sm"
               variant="outline"
-              className="h-7 px-3 text-xs gap-1.5 border-dashed border-muted-foreground/30"
+              className="h-6 sm:h-7 px-2 sm:px-3 text-xs gap-1 sm:gap-1.5 border-dashed border-muted-foreground/30"
             >
-              <PlusCircle className="h-3.5 w-3.5" />
+              <PlusCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span>Thêm phần cuối</span>
             </Button>
           </div>
@@ -505,15 +502,15 @@ export function AIContentAssistant({
           <Button
             variant="outline"
             size="sm"
-            className="gap-2"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
             data-testid="ai-assistant-button"
           >
-            <Sparkles className="h-4 w-4" />
+            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Trợ lý AI
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh] p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Tạo nội dung bài học với AI</DialogTitle>
           <DialogDescription>
@@ -521,22 +518,25 @@ export function AIContentAssistant({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-2 sm:py-4">
           {!isCustomizing ? (
             <>
               {/* Template Selection */}
               <div className="space-y-4">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
                   <h3 className="text-sm font-medium">Chọn mẫu cấu trúc</h3>
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="style" className="text-sm">
+                    <Label
+                      htmlFor="style"
+                      className="text-sm whitespace-nowrap"
+                    >
                       Phong cách viết:
                     </Label>
                     <Select
                       value={style}
                       onValueChange={(value) => setStyle(value as ContentStyle)}
                     >
-                      <SelectTrigger id="style" className="w-[140px]">
+                      <SelectTrigger id="style" className="w-full sm:w-[140px]">
                         <SelectValue placeholder="Chọn phong cách" />
                       </SelectTrigger>
                       <SelectContent>
@@ -552,7 +552,7 @@ export function AIContentAssistant({
                 </div>
 
                 {/* Default Templates */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {DEFAULT_TEMPLATES.map((template) => (
                     <Card
                       key={template.id}
@@ -564,23 +564,25 @@ export function AIContentAssistant({
                       )}
                       onClick={() => setSelectedTemplate(template.id)}
                     >
-                      <CardContent className="p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="flex flex-col items-center text-center gap-2">
                           {template.id === "tutorial" && (
-                            <BookOpen className="h-8 w-8 text-primary mb-1" />
+                            <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
                           )}
                           {template.id === "concept" && (
-                            <Lightbulb className="h-8 w-8 text-primary mb-1" />
+                            <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
                           )}
                           {template.id === "case-study" && (
-                            <GraduationCap className="h-8 w-8 text-primary mb-1" />
+                            <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1" />
                           )}
-                          <h3 className="font-medium">{template.name}</h3>
+                          <h3 className="font-medium text-sm sm:text-base">
+                            {template.name}
+                          </h3>
                           <p className="text-xs text-muted-foreground">
                             {template.description}
                           </p>
                         </div>
-                        <div className="mt-3 pt-3 border-t border-border/50">
+                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-border/50">
                           <div className="text-xs text-muted-foreground">
                             {template.structure.sections.map(
                               (section, index) => (
@@ -602,20 +604,20 @@ export function AIContentAssistant({
 
                 {/* User Saved Templates */}
                 {userTemplates.length > 0 && (
-                  <div className="mt-6">
+                  <div className="mt-4 sm:mt-6">
                     <h3 className="text-sm font-medium mb-2">Mẫu đã lưu</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {userTemplates.map((template) => (
                         <Card
                           key={template.id}
                           className="cursor-pointer transition-all hover:border-primary/50"
                         >
-                          <CardContent className="p-4">
+                          <CardContent className="p-3 sm:p-4">
                             <div className="flex justify-between items-start">
                               <div>
                                 <div className="flex items-center gap-1">
                                   <Star className="h-4 w-4 text-amber-500" />
-                                  <h3 className="font-medium">
+                                  <h3 className="font-medium text-sm sm:text-base">
                                     {template.name}
                                   </h3>
                                 </div>
@@ -698,32 +700,45 @@ export function AIContentAssistant({
             <>
               {/* Custom Structure Editor */}
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <h3 className="font-medium">Tùy chỉnh cấu trúc bài học</h3>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="style-custom" className="text-sm">
-                      Phong cách:
-                    </Label>
-                    <Select
-                      value={style}
-                      onValueChange={(value) => setStyle(value as ContentStyle)}
-                    >
-                      <SelectTrigger id="style-custom" className="w-[140px]">
-                        <SelectValue placeholder="Chọn phong cách" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="conversational">
-                          Trò chuyện
-                        </SelectItem>
-                        <SelectItem value="academic">Học thuật</SelectItem>
-                        <SelectItem value="practical">Thực tiễn</SelectItem>
-                        <SelectItem value="storytelling">Kể chuyện</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <Label
+                        htmlFor="style-custom"
+                        className="text-sm whitespace-nowrap"
+                      >
+                        Phong cách:
+                      </Label>
+                      <Select
+                        value={style}
+                        onValueChange={(value) =>
+                          setStyle(value as ContentStyle)
+                        }
+                      >
+                        <SelectTrigger
+                          id="style-custom"
+                          className="w-full sm:w-[140px]"
+                        >
+                          <SelectValue placeholder="Chọn phong cách" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="conversational">
+                            Trò chuyện
+                          </SelectItem>
+                          <SelectItem value="academic">Học thuật</SelectItem>
+                          <SelectItem value="practical">Thực tiễn</SelectItem>
+                          <SelectItem value="storytelling">
+                            Kể chuyện
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setIsCustomizing(false)}
+                      className="w-full sm:w-auto"
                     >
                       Quay lại
                     </Button>
@@ -732,12 +747,15 @@ export function AIContentAssistant({
 
                 <div className="border rounded-md bg-muted/20">
                   {/* Structure summary */}
-                  <div className="p-3 border-b flex items-center justify-between">
+                  <div className="p-3 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">
                         Cấu trúc ({customSections.length} phần)
                       </span>
-                      <Badge variant="outline" className="text-xs font-normal">
+                      <Badge
+                        variant="outline"
+                        className="text-xs font-normal truncate max-w-[150px] sm:max-w-[200px]"
+                      >
                         {customSections.length > 0 && customSections[0].title}
                         {customSections.length > 1 &&
                           ` → ${
@@ -752,7 +770,7 @@ export function AIContentAssistant({
 
                   {/* Scrollable section list with visual indicators */}
                   <div className="relative">
-                    <div className="max-h-[300px] overflow-y-auto p-3 pb-10 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/30">
+                    <div className="max-h-[250px] sm:max-h-[300px] overflow-y-auto p-3 pb-10 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/30">
                       <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
@@ -782,8 +800,8 @@ export function AIContentAssistant({
                 </div>
 
                 {showSaveDialog && (
-                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-background border rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto shadow-lg">
                       <h3 className="text-lg font-medium mb-4">
                         Lưu cấu trúc bài học
                       </h3>
@@ -828,14 +846,14 @@ export function AIContentAssistant({
           )}
         </div>
 
-        <DialogFooter className="flex justify-between items-center">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-3">
           {isCustomizing && (
             <Button
               type="button"
               onClick={() => setShowSaveDialog(true)}
               size="sm"
               variant="outline"
-              className="gap-1"
+              className="gap-1 w-full sm:w-auto"
               disabled={isLoading}
             >
               <Save className="h-4 w-4" />
@@ -847,7 +865,10 @@ export function AIContentAssistant({
             type="button"
             onClick={handleGenerateClick}
             disabled={isLoading}
-            className={cn("gap-2", !isCustomizing && "ml-auto")}
+            className={cn(
+              "gap-2 w-full sm:w-auto",
+              !isCustomizing && "sm:ml-auto"
+            )}
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -860,8 +881,8 @@ export function AIContentAssistant({
 
         {/* Save Confirmation Dialog */}
         {showSaveConfirmation && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-background border rounded-lg p-4 sm:p-6 max-w-md w-full mx-auto shadow-lg">
               <h3 className="text-lg font-medium mb-4">
                 Lưu cấu trúc bài học?
               </h3>
@@ -869,9 +890,10 @@ export function AIContentAssistant({
                 Bạn đã tùy chỉnh cấu trúc bài học. Bạn có muốn lưu lại để sử
                 dụng sau này không?
               </p>
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
                 <Button
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     setShowSaveConfirmation(false);
                     generateContent();
@@ -880,6 +902,7 @@ export function AIContentAssistant({
                   Không, tiếp tục
                 </Button>
                 <Button
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     setShowSaveConfirmation(false);
                     setShowSaveDialog(true);
