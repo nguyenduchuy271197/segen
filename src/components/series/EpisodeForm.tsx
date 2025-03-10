@@ -139,9 +139,18 @@ export function EpisodeForm({ episode, seriesId }: EpisodeFormProps) {
                     <Button
                       variant={episode.content ? "outline" : "default"}
                       size="icon"
-                      className="w-10 h-10"
+                      className={cn(
+                        "w-10 h-10 transition-all duration-300",
+                        !episode.content &&
+                          "animate-pulse-slow bg-primary/90 hover:bg-primary shadow-md"
+                      )}
                     >
-                      <Sparkles className="h-5 w-5" />
+                      <Sparkles
+                        className={cn(
+                          "h-5 w-5",
+                          !episode.content && "text-white"
+                        )}
+                      />
                     </Button>
                   }
                 />

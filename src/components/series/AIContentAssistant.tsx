@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,13 +21,44 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Loader2, Plus, Trash } from "lucide-react";
+import {
+  Sparkles,
+  Loader2,
+  BookOpen,
+  Lightbulb,
+  GraduationCap,
+  Plus,
+  Trash,
+  ChevronDown,
+  ChevronUp,
+  Save,
+  Star,
+  GripVertical,
+  PlusCircle,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EpisodeTemplate } from "@/lib/ai/types";
+import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // Predefined templates
 const DEFAULT_TEMPLATES: EpisodeTemplate[] = [
@@ -133,6 +164,16 @@ const DEFAULT_TEMPLATES: EpisodeTemplate[] = [
   },
 ];
 
+// User saved templates storage key
+const USER_TEMPLATES_KEY = "user_saved_templates";
+
+interface SavedTemplate {
+  id: string;
+  name: string;
+  sections: Array<{ title: string; type: string }>;
+  createdAt: string;
+}
+
 interface AIContentAssistantProps {
   episodeId: string;
   seriesId: string;
@@ -160,113 +201,158 @@ export function AIContentAssistant({
   trigger,
 }: AIContentAssistantProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("quick");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("tutorial");
   const [style, setStyle] = useState<ContentStyle>("conversational");
-  const [includeExercises, setIncludeExercises] = useState(true);
-  const [difficultyLevel, setDifficultyLevel] =
-    useState<DifficultyLevel>("intermediate");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [keyPoints, setKeyPoints] = useState<string[]>([]);
-  const [newKeyPoint, setNewKeyPoint] = useState("");
-  const [selectedTemplateId, setSelectedTemplateId] = useState("tutorial");
-  const [customTemplate, setCustomTemplate] = useState<
-    EpisodeTemplate["structure"]
-  >({
-    sections: [
-      { title: "Giới thiệu", type: "concept" },
-      { title: "Nội dung chính", type: "concept" },
-      { title: "Tổng kết", type: "summary" },
-    ],
-  });
+  const [isCustomizing, setIsCustomizing] = useState(false);
+  const [customSections, setCustomSections] = useState<
+    Array<{ title: string; type: SectionType }>
+  >([
+    { title: "Giới thiệu", type: "concept" },
+    { title: "Nội dung chính", type: "concept" },
+    { title: "Ví dụ minh họa", type: "example" },
+    { title: "Tổng kết", type: "summary" },
+  ]);
+  const [userTemplates, setUserTemplates] = useState<SavedTemplate[]>([]);
+  const [templateName, setTemplateName] = useState("");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const { toast } = useToast();
 
-  const addKeyPoint = () => {
-    if (newKeyPoint.trim()) {
-      setKeyPoints([...keyPoints, newKeyPoint.trim()]);
-      setNewKeyPoint("");
-    }
-  };
+  // Set up DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  const removeKeyPoint = (index: number) => {
-    setKeyPoints(keyPoints.filter((_, i) => i !== index));
-  };
+  // Load user templates on component mount
+  useEffect(() => {
+    const savedTemplates = localStorage.getItem(USER_TEMPLATES_KEY);
+    if (savedTemplates) {
+      try {
+        setUserTemplates(JSON.parse(savedTemplates));
+      } catch (e) {
+        console.error("Failed to parse saved templates", e);
+      }
+    }
+  }, []);
 
   const addSection = () => {
-    setCustomTemplate({
-      ...customTemplate,
-      sections: [
-        ...customTemplate.sections,
-        { title: "Phần mới", type: "concept" },
-      ],
-    });
+    setCustomSections([
+      ...customSections,
+      { title: "Phần mới", type: "concept" },
+    ]);
+  };
+
+  const insertSectionAfter = (index: number) => {
+    const newSections = [...customSections];
+    newSections.splice(index + 1, 0, { title: "Phần mới", type: "concept" });
+    setCustomSections(newSections);
   };
 
   const removeSection = (index: number) => {
-    setCustomTemplate({
-      ...customTemplate,
-      sections: customTemplate.sections.filter((_, i) => i !== index),
-    });
+    setCustomSections(customSections.filter((_, i) => i !== index));
   };
 
   const updateSectionTitle = (index: number, title: string) => {
-    const updatedSections = [...customTemplate.sections];
-    updatedSections[index] = { ...updatedSections[index], title };
-    setCustomTemplate({ ...customTemplate, sections: updatedSections });
+    const updated = [...customSections];
+    updated[index] = { ...updated[index], title };
+    setCustomSections(updated);
   };
 
-  const updateSectionType = (index: number, type: SectionType) => {
-    const updatedSections = [...customTemplate.sections];
-    updatedSections[index] = { ...updatedSections[index], type };
-    setCustomTemplate({ ...customTemplate, sections: updatedSections });
-  };
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
 
-  const getSelectedTemplate = (): EpisodeTemplate["structure"] => {
-    if (activeTab === "template") {
-      return (
-        DEFAULT_TEMPLATES.find((t) => t.id === selectedTemplateId)?.structure ||
-        DEFAULT_TEMPLATES[0].structure
-      );
-    } else if (activeTab === "custom") {
-      return customTemplate;
+    if (over && active.id !== over.id) {
+      setCustomSections((items) => {
+        const oldIndex = items.findIndex(
+          (_, i) => `section-${i}` === active.id
+        );
+        const newIndex = items.findIndex((_, i) => `section-${i}` === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
     }
-    return { sections: [] };
+  };
+
+  const saveTemplate = () => {
+    if (!templateName.trim()) {
+      toast({
+        title: "Tên mẫu không được để trống",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newTemplate: SavedTemplate = {
+      id: `user-${Date.now()}`,
+      name: templateName,
+      sections: customSections,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedTemplates = [...userTemplates, newTemplate];
+    setUserTemplates(updatedTemplates);
+    localStorage.setItem(USER_TEMPLATES_KEY, JSON.stringify(updatedTemplates));
+
+    toast({
+      title: "Đã lưu mẫu thành công",
+      description: `Mẫu "${templateName}" đã được lưu và có thể sử dụng lại`,
+    });
+
+    setTemplateName("");
+    setShowSaveDialog(false);
+  };
+
+  const loadUserTemplate = (template: SavedTemplate) => {
+    setCustomSections(
+      template.sections as Array<{ title: string; type: SectionType }>
+    );
+    setIsCustomizing(true);
+
+    toast({
+      title: "Đã tải mẫu",
+      description: `Mẫu "${template.name}" đã được tải`,
+    });
+  };
+
+  const deleteUserTemplate = (templateId: string) => {
+    const updatedTemplates = userTemplates.filter((t) => t.id !== templateId);
+    setUserTemplates(updatedTemplates);
+    localStorage.setItem(USER_TEMPLATES_KEY, JSON.stringify(updatedTemplates));
+
+    toast({
+      title: "Đã xóa mẫu",
+    });
+  };
+
+  const getStructure = () => {
+    if (isCustomizing) {
+      return { sections: customSections };
+    }
+    return (
+      DEFAULT_TEMPLATES.find((t) => t.id === selectedTemplate)?.structure ||
+      DEFAULT_TEMPLATES[0].structure
+    );
   };
 
   const generateContent = async () => {
     setIsLoading(true);
 
     try {
-      let response;
-
-      if (activeTab === "quick") {
-        // Quick generation with style options
-        response = await fetch("/api/ai/generate-episode", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            seriesId,
-            episodeId,
-            options: {
-              style,
-              includeExercises,
-              difficultyLevel,
-              targetAudience: targetAudience || undefined,
-              keyPoints: keyPoints.length > 0 ? keyPoints : undefined,
-            },
-          }),
-        });
-      } else {
-        // Structured generation with template
-        response = await fetch("/api/ai/generate-structured-episode", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            seriesId,
-            episodeId,
-            structure: getSelectedTemplate(),
-          }),
-        });
-      }
+      // Generate content with the selected template or custom structure
+      const response = await fetch("/api/ai/generate-structured-episode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seriesId,
+          episodeId,
+          structure: getStructure(),
+          options: {
+            style,
+          },
+        }),
+      });
 
       if (!response.ok) {
         const data = await response.json();
@@ -307,6 +393,92 @@ export function AIContentAssistant({
     }
   };
 
+  // SortableItem component for drag and drop
+  function SortableItem({
+    id,
+    index,
+    section,
+    isLast,
+  }: {
+    id: string;
+    index: number;
+    section: { title: string; type: SectionType };
+    isLast?: boolean;
+  }) {
+    const { attributes, listeners, setNodeRef, transform, transition } =
+      useSortable({ id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+
+    return (
+      <div ref={setNodeRef} style={style} className="mb-2 group relative">
+        <div className="border rounded-md bg-card">
+          <div className="p-3">
+            <div className="flex items-center gap-2">
+              <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing"
+              >
+                <GripVertical className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <Input
+                  value={section.title}
+                  onChange={(e) => updateSectionTitle(index, e.target.value)}
+                  placeholder="Tiêu đề phần"
+                />
+              </div>
+              <Button
+                type="button"
+                onClick={() => removeSection(index)}
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                disabled={customSections.length <= 2}
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Insert button that appears on hover or focus */}
+        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-10">
+          <Button
+            type="button"
+            onClick={() => insertSectionAfter(index)}
+            size="icon"
+            variant="outline"
+            className="h-6 w-6 rounded-full bg-background border-primary/30 shadow-sm"
+          >
+            <PlusCircle className="h-3.5 w-3.5 text-primary" />
+            <span className="sr-only">Chèn phần mới</span>
+          </Button>
+        </div>
+
+        {/* Add section button after the last item */}
+        {isLast && (
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 mt-2">
+            <Button
+              type="button"
+              onClick={addSection}
+              size="sm"
+              variant="outline"
+              className="h-7 px-3 text-xs gap-1.5 border-dashed border-muted-foreground/30"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span>Thêm phần cuối</span>
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -322,236 +494,301 @@ export function AIContentAssistant({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Trợ lý tạo nội dung AI</DialogTitle>
+          <DialogTitle>Tạo nội dung bài học với AI</DialogTitle>
           <DialogDescription>
-            Sử dụng AI để tạo nội dung cho bài học &ldquo;{episodeTitle}&rdquo;
+            Chọn cấu trúc bài học phù hợp cho &ldquo;{episodeTitle}&rdquo;
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="quick">Tạo nhanh</TabsTrigger>
-            <TabsTrigger value="template">Mẫu có sẵn</TabsTrigger>
-            <TabsTrigger value="custom">Tùy chỉnh cấu trúc</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="quick" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="style">Phong cách viết</Label>
-                <Select
-                  value={style}
-                  onValueChange={(value) => setStyle(value as ContentStyle)}
-                >
-                  <SelectTrigger id="style">
-                    <SelectValue placeholder="Chọn phong cách" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="conversational">Trò chuyện</SelectItem>
-                    <SelectItem value="academic">Học thuật</SelectItem>
-                    <SelectItem value="practical">Thực tiễn</SelectItem>
-                    <SelectItem value="storytelling">Kể chuyện</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">Độ khó</Label>
-                <Select
-                  value={difficultyLevel}
-                  onValueChange={(value) =>
-                    setDifficultyLevel(value as DifficultyLevel)
-                  }
-                >
-                  <SelectTrigger id="difficulty">
-                    <SelectValue placeholder="Chọn độ khó" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beginner">Cơ bản</SelectItem>
-                    <SelectItem value="intermediate">Trung cấp</SelectItem>
-                    <SelectItem value="advanced">Nâng cao</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="audience">
-                Đối tượng người học (không bắt buộc)
-              </Label>
-              <Input
-                id="audience"
-                placeholder="Ví dụ: Sinh viên đại học, Người mới bắt đầu..."
-                value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="exercises"
-                checked={includeExercises}
-                onCheckedChange={setIncludeExercises}
-              />
-              <Label htmlFor="exercises">Bao gồm bài tập thực hành</Label>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Điểm chính cần đề cập</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Thêm điểm chính"
-                  value={newKeyPoint}
-                  onChange={(e) => setNewKeyPoint(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addKeyPoint();
-                    }
-                  }}
-                />
-                <Button type="button" onClick={addKeyPoint} size="icon">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mt-2">
-                {keyPoints.map((point, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                  >
-                    {point}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 p-0 ml-1"
-                      onClick={() => removeKeyPoint(index)}
-                    >
-                      <Trash className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="template" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {DEFAULT_TEMPLATES.map((template) => (
-                <Card
-                  key={template.id}
-                  className={`cursor-pointer transition-all ${
-                    selectedTemplateId === template.id
-                      ? "border-primary"
-                      : "hover:border-muted-foreground/20"
-                  }`}
-                  onClick={() => setSelectedTemplateId(template.id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium">{template.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {template.description}
-                        </p>
-                      </div>
-                      <div
-                        className={`w-4 h-4 rounded-full ${
-                          selectedTemplateId === template.id
-                            ? "bg-primary"
-                            : "bg-muted"
-                        }`}
-                      />
-                    </div>
-                    <div className="mt-4 space-y-1">
-                      {template.structure.sections.map((section, index) => (
-                        <div
-                          key={index}
-                          className="text-xs text-muted-foreground flex items-center"
-                        >
-                          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 mr-2" />
-                          {section.title}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="custom" className="space-y-4">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Label>Cấu trúc bài học tùy chỉnh</Label>
-                <Button
-                  type="button"
-                  onClick={addSection}
-                  size="sm"
-                  variant="outline"
-                  className="gap-1"
-                >
-                  <Plus className="h-3 w-3" /> Thêm phần
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {customTemplate.sections.map((section, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 border p-3 rounded-md"
-                  >
-                    <div className="flex-1">
-                      <Input
-                        value={section.title}
-                        onChange={(e) =>
-                          updateSectionTitle(index, e.target.value)
-                        }
-                        placeholder="Tiêu đề phần"
-                      />
-                    </div>
+        <div className="space-y-6 py-4">
+          {!isCustomizing ? (
+            <>
+              {/* Template Selection */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-medium">Chọn mẫu cấu trúc</h3>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="style" className="text-sm">
+                      Phong cách viết:
+                    </Label>
                     <Select
-                      value={section.type}
-                      onValueChange={(value) =>
-                        updateSectionType(index, value as SectionType)
-                      }
+                      value={style}
+                      onValueChange={(value) => setStyle(value as ContentStyle)}
                     >
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue />
+                      <SelectTrigger id="style" className="w-[140px]">
+                        <SelectValue placeholder="Chọn phong cách" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="concept">Khái niệm</SelectItem>
-                        <SelectItem value="example">Ví dụ</SelectItem>
-                        <SelectItem value="exercise">Bài tập</SelectItem>
-                        <SelectItem value="summary">Tổng kết</SelectItem>
+                        <SelectItem value="conversational">
+                          Trò chuyện
+                        </SelectItem>
+                        <SelectItem value="academic">Học thuật</SelectItem>
+                        <SelectItem value="practical">Thực tiễn</SelectItem>
+                        <SelectItem value="storytelling">Kể chuyện</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button
-                      type="button"
-                      onClick={() => removeSection(index)}
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
                   </div>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+                </div>
 
-        <DialogFooter className="mt-6">
+                {/* Default Templates */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {DEFAULT_TEMPLATES.map((template) => (
+                    <Card
+                      key={template.id}
+                      className={cn(
+                        "cursor-pointer transition-all hover:border-primary/50",
+                        selectedTemplate === template.id
+                          ? "border-primary bg-primary/5"
+                          : ""
+                      )}
+                      onClick={() => setSelectedTemplate(template.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex flex-col items-center text-center gap-2">
+                          {template.id === "tutorial" && (
+                            <BookOpen className="h-8 w-8 text-primary mb-1" />
+                          )}
+                          {template.id === "concept" && (
+                            <Lightbulb className="h-8 w-8 text-primary mb-1" />
+                          )}
+                          {template.id === "case-study" && (
+                            <GraduationCap className="h-8 w-8 text-primary mb-1" />
+                          )}
+                          <h3 className="font-medium">{template.name}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {template.description}
+                          </p>
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-border/50">
+                          <div className="text-xs text-muted-foreground">
+                            {template.structure.sections.map(
+                              (section, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-1 mb-1"
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                                  <span>{section.title}</span>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* User Saved Templates */}
+                {userTemplates.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-sm font-medium mb-2">Mẫu đã lưu</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {userTemplates.map((template) => (
+                        <Card
+                          key={template.id}
+                          className="cursor-pointer transition-all hover:border-primary/50"
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="flex items-center gap-1">
+                                  <Star className="h-4 w-4 text-amber-500" />
+                                  <h3 className="font-medium">
+                                    {template.name}
+                                  </h3>
+                                </div>
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                  {template.sections
+                                    .slice(0, 3)
+                                    .map((section, index) => (
+                                      <div
+                                        key={index}
+                                        className="flex items-center gap-1 mb-1"
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
+                                        <span>{section.title}</span>
+                                      </div>
+                                    ))}
+                                  {template.sections.length > 3 && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      + {template.sections.length - 3} phần khác
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    loadUserTemplate(template);
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteUserTemplate(template.id);
+                                  }}
+                                >
+                                  <Trash className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => {
+                    // Initialize custom sections based on selected template
+                    const template = DEFAULT_TEMPLATES.find(
+                      (t) => t.id === selectedTemplate
+                    );
+                    if (template) {
+                      setCustomSections(
+                        template.structure.sections.map((s) => ({
+                          title: s.title,
+                          type: s.type,
+                        }))
+                      );
+                    }
+                    setIsCustomizing(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tùy chỉnh cấu trúc bài học
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Custom Structure Editor */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium">Tùy chỉnh cấu trúc bài học</h3>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="style-custom" className="text-sm">
+                      Phong cách:
+                    </Label>
+                    <Select
+                      value={style}
+                      onValueChange={(value) => setStyle(value as ContentStyle)}
+                    >
+                      <SelectTrigger id="style-custom" className="w-[140px]">
+                        <SelectValue placeholder="Chọn phong cách" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="conversational">
+                          Trò chuyện
+                        </SelectItem>
+                        <SelectItem value="academic">Học thuật</SelectItem>
+                        <SelectItem value="practical">Thực tiễn</SelectItem>
+                        <SelectItem value="storytelling">Kể chuyện</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        type="button"
+                        onClick={() => setShowSaveDialog(true)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        title="Lưu mẫu"
+                      >
+                        <Save className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsCustomizing(false)}
+                      >
+                        Quay lại
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="max-h-[300px] overflow-y-auto p-1 pb-10">
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={customSections.map((_, i) => `section-${i}`)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {customSections.map((section, index) => (
+                        <SortableItem
+                          key={`section-${index}`}
+                          id={`section-${index}`}
+                          index={index}
+                          section={section}
+                          isLast={index === customSections.length - 1}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+
+                {showSaveDialog && (
+                  <div className="border rounded-md p-3 mt-2 bg-muted/30">
+                    <h4 className="text-sm font-medium mb-2">
+                      Lưu mẫu để sử dụng sau
+                    </h4>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Nhập tên mẫu"
+                        value={templateName}
+                        onChange={(e) => setTemplateName(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={saveTemplate}
+                        disabled={!templateName.trim()}
+                      >
+                        Lưu
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowSaveDialog(false);
+                          setTemplateName("");
+                        }}
+                      >
+                        Hủy
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <DialogFooter>
           <Button
             type="button"
             onClick={generateContent}
             disabled={isLoading}
-            className="gap-2"
+            className="gap-2 w-full md:w-auto"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
