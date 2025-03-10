@@ -32,6 +32,7 @@ import {
   Star,
   GripVertical,
   PlusCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -512,9 +513,15 @@ export function AIContentAssistant({
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh] p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Tạo nội dung bài học với AI</DialogTitle>
+          <DialogTitle>
+            {isCustomizing
+              ? "Tùy chỉnh cấu trúc bài học"
+              : "Tạo nội dung bài học với AI"}
+          </DialogTitle>
           <DialogDescription>
-            Chọn cấu trúc bài học phù hợp cho &ldquo;{episodeTitle}&rdquo;
+            {isCustomizing
+              ? "Điều chỉnh cấu trúc bài học theo nhu cầu của bạn"
+              : `Chọn cấu trúc bài học phù hợp cho "${episodeTitle}"`}
           </DialogDescription>
         </DialogHeader>
 
@@ -701,7 +708,21 @@ export function AIContentAssistant({
               {/* Custom Structure Editor */}
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                  <h3 className="font-medium">Tùy chỉnh cấu trúc bài học</h3>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsCustomizing(false)}
+                      className="mr-1 p-0 h-8 w-8 rounded-full hover:bg-muted"
+                      title="Quay lại chọn mẫu"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span className="sr-only">Quay lại</span>
+                    </Button>
+                    <h3 className="font-medium text-sm sm:text-base">
+                      Cấu trúc bài học
+                    </h3>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Label
@@ -734,14 +755,6 @@ export function AIContentAssistant({
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsCustomizing(false)}
-                      className="w-full sm:w-auto"
-                    >
-                      Quay lại
-                    </Button>
                   </div>
                 </div>
 
